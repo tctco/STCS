@@ -3,7 +3,7 @@ Official implementation of Deciphering Complex Social Behaviors with SSTC: Enhan
 
 ![demo.gif](https://github.com/tctco/SSTC/blob/main/demo.gif)
 
-Here are some videos showcasing the pose tracking performance! 
+Here are some videos showcasing the pose tracking performance (tested on Lenovo Thinkbook16p 2021 with 16GB RAM and RTX3060 MaxQ)! 
 
 > The following videos are tracked with an unsupervised method which is animal-agnostic.
 
