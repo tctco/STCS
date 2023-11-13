@@ -1,6 +1,8 @@
 # SSTC: Enhanced Multi Animal Tracking and Social Behavior Analysis
 Official implementation of Deciphering Complex Social Behaviors with SSTC: Enhanced Multi-Animal Tracking and Analysis in Neuroscience Research
 
+![demo.gif](https://github.com/tctco/SSTC/blob/main/demo.gif)
+
 Here are some videos showcasing the pose tracking performance!
 
 |  Name   | Size(MB) | Duration | Resolution  |  FPS  | Recording Device | idTracker.ai V4.0.12 time | segTracker.ai time | Bilibili                                                     |
