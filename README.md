@@ -3,7 +3,9 @@ Official implementation of Deciphering Complex Social Behaviors with SSTC: Enhan
 
 ![demo.gif](https://github.com/tctco/SSTC/blob/main/demo.gif)
 
-Here are some videos showcasing the pose tracking performance!
+Here are some videos showcasing the pose tracking performance! 
+
+> The following videos are tracked with an unsupervised method which is animal-agnostic.
 
 |  Name   | Size(MB) | Duration | Resolution  |  FPS  | Recording Device | idTracker.ai V4.0.12 time | segTracker.ai time | Bilibili                                                     |
 | :-----: | :------: | :------: | :---------: | :---: | :--------------: | :-----------------------: | :----------------: | ------------------------------------------------------------ |
