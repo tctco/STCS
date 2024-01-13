@@ -81,8 +81,8 @@ Baidu netdisk
 
 ## Acknowledgment
 
-We thank OpenMMLab, idTracker.ai, DeepLabCut, SLEAP, TRex/TGrab, SeBA... (there are too many) team for developing wonderful opensource software!
+We thank OpenMMLab, idTracker.ai, DeepLabCut, SLEAP, TRex/TGrab, SeBA, OCSORT, ByteTrack, YOLOv8... (there are too many to list here, I'm sorry) team for developing wonderful opensource software!
 
 I also thank Professor Li Hao for providing generous help and Ph.D. Lai Chuan for providing his experiment videos.
 
-> Please note that the use of this project for commercial purposes is prohibited. If you have such a requirement, please contact the corresponding author.
+> Please note that using this project for commercial purposes is prohibited. If you have such a requirement, please contact the corresponding author.
