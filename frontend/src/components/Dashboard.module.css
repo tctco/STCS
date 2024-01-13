@@ -1,0 +1,11 @@
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans+Condensed:wght@300&display=swap");
+
+.logo {
+  display: flex;
+  height: 64px;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-family: "Open Sans Condensed", sans-serif;
+  font-size: 25px;
+}

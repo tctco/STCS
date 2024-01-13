@@ -1,0 +1,24 @@
+FROM python:3.9-slim-buster
+
+WORKDIR /backend
+COPY . ./
+
+RUN echo "deb http://mirrors.aliyun.com/debian/ buster main non-free contrib" > /etc/apt/sources.list && \
+    echo "deb-src http://mirrors.aliyun.com/debian/ buster main non-free contrib" >> /etc/apt/sources.list && \
+    echo "deb http://mirrors.aliyun.com/debian-security buster/updates main" >> /etc/apt/sources.list && \
+    echo "deb-src http://mirrors.aliyun.com/debian-security buster/updates main" >> /etc/apt/sources.list && \
+    echo "deb http://mirrors.aliyun.com/debian/ buster-updates main non-free contrib" >> /etc/apt/sources.list && \
+    echo "deb-src http://mirrors.aliyun.com/debian/ buster-updates main non-free contrib" >> /etc/apt/sources.list && \
+    pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+
+
+RUN apt-get update \
+    && apt-get install -y libpq-dev ffmpeg libsm6 libxext6 gcc \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir -r requirements-flask.txt \
+    && pip install torch==1.13.1+cpu --extra-index-url https://download.pytorch.org/whl/cpu
+
+RUN pip install openmim \
+    && mim install mmcv-lite
+EXPOSE 5000

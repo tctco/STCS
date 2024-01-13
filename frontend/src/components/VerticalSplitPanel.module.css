@@ -1,0 +1,39 @@
+.container {
+    width: 100%;
+    min-height: auto;
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+  }
+  
+  .right {
+    width: 50%;
+    display: flex;
+    flex-wrap: wrap;
+    height: auto;
+    min-width: 10px;
+    word-wrap: break-word;
+    word-break: break-all;
+    overflow: auto;
+  }
+  
+  .separator {
+    cursor: col-resize;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='30'><path d='M2 0 v30 M5 0 v30 M8 0 v30' fill='none' stroke='black'/></svg>");
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 10px;
+    height: auto;
+    min-width: 10px;
+    user-select: none;
+  }
+  
+  .left {
+    width: 50%;
+    height: auto;
+    min-width: 10px;
+    /* background-color: green; */
+    word-wrap: break-word;
+    word-break: break-all;
+    overflow: auto;
+  }

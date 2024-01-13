@@ -1,0 +1,17 @@
+SQLAlchemy==2.0.19
+redis==5.0.0
+rq==1.15.1
+numpy==1.24.3
+numba==0.57.0
+opencv-python-headless==4.8.0.76
+matplotlib==3.7.1
+networkx==2.8.4
+ultralytics==8.0.180
+lap==0.4.0
+scipy==1.10.1
+psycopg2==2.9.9
+Flask==2.2.3
+Flask-Cors==4.0.0
+Werkzeug==2.2.3
+flask-restx==1.1.0
+PyJWT==2.8.0
