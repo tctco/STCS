@@ -18,6 +18,7 @@ resource_path = os.environ.get("RESOURCE_PATH", "./static")
 VIDEO_ROOT_PATH = Path(f"{resource_path}/videos")
 EXP_FILES_PATH = Path("exp/files")
 CLS_MODELS_PATH = Path("exp/cls_models")
+resource_path = Path(resource_path)
 
 
 ALLOWED_EXTENSIONS = set([".mp4"])
@@ -211,7 +212,7 @@ class VideoResource(Resource):
         if not video:
             return error_msg(f"Cannot find video with id {video_id}"), 404
         g.session.delete(video)
-        v_path = VIDEO_ROOT_PATH / f"{current_user.id}/{video.name}"
+        v_path = resource_path / "videos" / f"{current_user.id}/{video.name}"
         if v_path.exists():
             os.remove(v_path)
         g.session.commit()
@@ -219,46 +220,17 @@ class VideoResource(Resource):
         json_path = Path(f"{resource_path}/json/{current_user.id}/{purename}.json")
         if json_path.exists():
             os.remove(json_path)
-        cls_models = CLS_MODELS_PATH / purename
-        if cls_models.exists():
-            shutil.rmtree(cls_models)
-        exp_files = EXP_FILES_PATH / purename
+        pure_original_name, ext = os.path.splitext(video.original_name)
+        exp_files = (
+            resource_path
+            / "exp"
+            / str(video.user_id)
+            / f"{purename}_{pure_original_name}"
+        )
         if exp_files.exists():
             shutil.rmtree(exp_files)
+
+        cls_models = CLS_MODELS_PATH / f"cls_{purename}_work_dirs"
+        if cls_models.exists():
+            shutil.rmtree(cls_models)
         return success_msg(f"Successfully deleted videos")
-
-
-# new delete logic
-# @api.route("/<video_id>")
-# @api.doc(params={"video_id": "The video id"})
-# class VideoResource(Resource):
-#     @api.response(404, "Video not found", message_model)
-#     @api.marshal_with(message_model)
-#     @token_required
-#     def delete(self, current_user: User, video_id: int):
-#         video = (
-#             g.session.query(Video)
-#             .filter(Video.id == video_id, Video.user_id == current_user.id)
-#             .first()
-#         )
-#         if not video:
-#             return error_msg(f"Cannot find video with id {video_id}"), 404
-#         g.session.delete(video)
-#         v_path = resource_path / "videos" / f"{current_user.id}/{video.name}"
-#         if v_path.exists():
-#             os.remove(v_path)
-#         g.session.commit()
-#         purename, ext = os.path.splitext(video.name)
-#         json_path = Path(f"{resource_path}/json/{current_user.id}/{purename}.json")
-#         if json_path.exists():
-#             os.remove(json_path)
-#         pure_original_name, ext = os.path.splitext(video.original_name)
-#         exp_files = (
-#             resource_path
-#             / "exp"
-#             / str(video.user_id)
-#             / f"{purename}_{pure_original_name}"
-#         )
-#         if exp_files.exists():
-#             shutil.rmtree(exp_files)
-#         return success_msg(f"Successfully deleted videos")
