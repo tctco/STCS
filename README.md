@@ -61,6 +61,8 @@ https://github.com/tctco/STCS/assets/45505657/f6dd5964-652c-4e63-bd48-0cbca1607e
 
 ## segCluster
 
+![image](https://github.com/tctco/STCS/assets/45505657/96aacaaf-191e-4f9c-9e57-c8de97f6a93b)
+
 Check here to learn how to use STGCN-Autoencoder for learning social behavior embeddings [weakly-supervised clustering](./segCluster/quick_start.ipynb). Please download `segCluster_data` from the release page and place it under `segCluster/segCluster_data`
 
 ## Reproduce figures
