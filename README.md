@@ -1,9 +1,9 @@
 # 👋Welcome to segTracker!
 
 
-<div style="text-align:center">
-<img src='./demo/logo.svg' style="width:40%">
-</div>
+<p align="center">
+<img src="./demo/logo.svg" style="width:40%" alt="logo">
+</p>
 
 This is the official implementation of SSTC: Enhanced Multi Animal Tracking and Social Behavior Analysis
 
@@ -41,13 +41,27 @@ Here are some videos showcasing the pose tracking performance (tested on Lenovo 
 1. Clone this repo to your computer and `cd STCS`
 2. Download the trained models from the release page and place them inside `STCS/backend/trained_models`
 3. Build & run the docker container by `docker compose up` (this container is quite large, I'm sorry)
-4. Open your browser and goto `localhost` (you can access segTracker.ai via WAN/LAN by your hosting IP as well)
+4. Open your browser and go to `localhost` (you can access segTracker.ai via WAN/LAN by your hosting IP as well)
 5. Convert your video to a codec supported by Chrome Edge browser (we only tested H264)
 6. Upload the video and start tracking!
 
+You need to create a user first (you don't need to input your real email address) to upload your video:
+
+
+https://github.com/tctco/STCS/assets/45505657/7af5c86f-c5c3-4de0-9ed3-4cf11bce0d15
+
+
+After some time, you can visualize the tracking result and download the JSON file:
+
+
+
+https://github.com/tctco/STCS/assets/45505657/f6dd5964-652c-4e63-bd48-0cbca1607e81
+
+
+
 ## segCluster
 
-Check here to know how to use STGCN-Autoencoder for learning social behavior embeddings [weakly-supervised clustering](./segCluster/quick_start.ipynb). Please download `segCluster_data` from the release page and place it under `segCluster/segCluster_data`
+Check here to learn how to use STGCN-Autoencoder for learning social behavior embeddings [weakly-supervised clustering](./segCluster/quick_start.ipynb). Please download `segCluster_data` from the release page and place it under `segCluster/segCluster_data`
 
 ## Reproduce figures
 
@@ -67,6 +81,6 @@ Baidu netdisk
 
 We thank OpenMMLab, idTracker.ai, DeepLabCut, SLEAP, TRex/TGrab, SeBA... (there are too many) team for developing wonderful opensource software!
 
-I also thank Professor Li Hao for providing generous help and Ph.D Lai Chuan for providing his experiment videos.
+I also thank Professor Li Hao for providing generous help and Ph.D. Lai Chuan for providing his experiment videos.
 
-> Please note that any commercial use for this project is not allowed.
+> Please note that the use of this project for commercial purposes is prohibited. If you have such a requirement, please contact the corresponding author.
