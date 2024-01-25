@@ -34,7 +34,7 @@ Here are some videos showcasing the pose tracking performance (tested on Lenovo 
 |4xPD|Fly|Ant|New video|
 |![4xPD](./demo/4xPD.gif)|![fly](./demo/fly.gif)|![ant](./demo/ant.gif)|![rob](./demo/rob.gif)|
 
-> We did not use any of the frames in the 'New video' to train our instance segmentation and pose model.
+> We did not use any of the frames in the 'New video' ([link](https://www.bilibili.com/video/BV1JC4y167un/?share_source=copy_web)) to train our instance segmentation and pose model.
 
 ## Quick start
 
