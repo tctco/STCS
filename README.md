@@ -67,9 +67,15 @@ Check here to learn how to use STGCN-Autoencoder for learning social behavior em
 
 ## Reproduce figures
 
-Check here for reproduction of some of the figures [code to reproduce figures](./reproduce_figures/code_to_reproduce_figures.ipynb). Please download `data_and_fig` from the release page and place it under `reproduce_figures/data_and_fig`.
+Check here for the reproduction of some of the figures [code to reproduce figures](./reproduce_figures/code_to_reproduce_figures.ipynb). Please download `data_and_fig` from the release page and place it under `reproduce_figures/data_and_fig`.
 
 ## Supplementary materials 
+
+Figshare:
+https://doi.org/10.6084/m9.figshare.25341856.v1
+https://figshare.com/articles/online_resource/segCluster_supp_materials_zip/25341859
+
+> It takes centuries to upload files to Figshare... Therefore I have to remove some raw experimental videos from supplementary files (they are not very important). If you wish to analyze the raw videos from scratch, please refer to the Baidu netdisk links below.
 
 Baidu netdisk
 
