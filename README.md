@@ -28,13 +28,17 @@ Here are some videos showcasing the pose tracking performance (tested on Lenovo 
 | 14ants  |   109    | 00:12:57 |  840 x 714  | 59.94 |        -         |          6:27:35          |      1:51:18       | [link](https://www.bilibili.com/video/BV1QN4y1D7zm/?share_source=copy_web&vd_source=ad3d39ad107403a8c972cdb9c2a407d5) |
 | 10flies |   32.5   | 00:10:12 |  948 x 920  |  60   |        -         |        1d, 6:03:28        |      2:09:06       | [link](https://www.bilibili.com/video/BV1zN4y1D7Zx/?share_source=copy_web&vd_source=ad3d39ad107403a8c972cdb9c2a407d5) |
 
-|2xWT|4xWT|6xWT|Noduls|
-|:-:|:-:|:-:|:-:|
-|![2xWT](./demo/2xWT.gif)|![4xWT](./demo/4xWT.gif)|![6xWT](./demo/6xWT.gif)|![Noduls](./demo/Noduls.gif)|
-|4xPD|Fly|Ant|New video|
-|![4xPD](./demo/4xPD.gif)|![fly](./demo/fly.gif)|![ant](./demo/ant.gif)|![rob](./demo/rob.gif)|
+|2xWT|4xWT|6xWT|
+|:-:|:-:|:-:|
+|![2xWT](./demo/2xWT.gif)|![4xWT](./demo/4xWT.gif)|![6xWT](./demo/6xWT.gif)|
+|Noduls|4xPD|Fly|
+|![Noduls](./demo/Noduls.gif)|![4xPD](./demo/4xPD.gif)|![fly](./demo/fly.gif)|
+|Ant|New video|sleeping|
+|![ant](./demo/ant.gif)|![rob](./demo/rob.gif)|![sleeping](./demo/sleeping.gif)|
 
 > We did not use any of the frames in the 'New video' ([link](https://www.bilibili.com/video/BV1JC4y167un/?share_source=copy_web)) to train our instance segmentation and pose model.
+>
+> We also added a 'sleeping.mp4' video in which all animals are stationary to test our algorithm ([link](https://www.bilibili.com/list/267001661?oid=1503127717&bvid=BV19D421p7Sm))
 
 ## Quick start
 
