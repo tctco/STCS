@@ -1,0 +1,8 @@
+exp/
+__pycache__/
+static/
+*.db
+.git
+*.pyc
+*.pyo
+*.gitignore

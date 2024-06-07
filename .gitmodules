@@ -1,0 +1,10 @@
+[submodule "backend/openmmlab/mmflow"]
+	path = backend/openmmlab/mmflow
+	url = https://github.com/tctco/mmflow.git
+	branch = 1.x
+[submodule "segCluster/mmaction2"]
+	path = segCluster/mmaction2
+	url = https://github.com/tctco/mmaction2.git
+[submodule "backend/openmmlab/mmpretrain"]
+	path = backend/openmmlab/mmpretrain
+	url = https://github.com/tctco/mmpretrain.git

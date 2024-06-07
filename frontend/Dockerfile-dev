@@ -1,0 +1,20 @@
+# Base Stage
+FROM node:14 AS dev-env
+WORKDIR /app
+
+# 将你的前端代码复制到容器中
+COPY . ./
+
+# 设置你可能需要的环境变量
+ARG VITE_APP_API_URL
+ENV VITE_APP_API_URL=${VITE_APP_API_URL}
+
+# 使用淘宝的 NPM 镜像加速依赖安装
+RUN npm config set registry https://registry.npmmirror.com/ \
+    && npm install
+
+# 暴露 Vite 开发服务器默认的端口，通常是 3000，但如果你修改了默认端口，请相应地修改这里
+EXPOSE 3000
+
+# 启动 Vite 开发服务器
+CMD ["npm", "run", "dev"]

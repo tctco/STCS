@@ -1,0 +1,20 @@
+.svgContainer {
+    width: 100%;
+    min-width: 200px;
+    height: 25px;
+    position: relative;
+  }
+  
+  .svgCanvas {
+    height: 100%;
+    width: 100%;
+  }
+  
+  .svgContainer line {
+    stroke: red;
+    stroke-width: 5;
+  }
+  
+  .svgCanvas g {
+    pointer-events: none;
+  }

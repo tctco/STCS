@@ -1,0 +1,114 @@
+version: "3"
+
+services:
+  # Flask Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile-flask
+    container_name: backend
+    command: python run.py
+    # command: gunicorn -w 4 -b 0.0.0.0:5000 run:app
+    environment:
+      - REDIS_URL=redis://redis
+      - REDIS_PORT=6379
+      - RESOURCE_PATH=/segtracker/resources
+      - DATABASE_URL=postgresql://segtracker:password@postgres:5432/segtracker
+    volumes:
+      - ./resources:/segtracker/resources
+      - ./backend:/backend # for debugging
+    networks:
+      - segtracker-network
+    depends_on:
+      - redis
+      - postgres
+
+  # RQ Worker Service
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile-worker
+    shm_size: "8gb"
+    container_name: worker
+    command: rq worker
+    environment:
+      - REDIS_URL=redis://redis
+      - REDIS_PORT=6379
+      - RESOURCE_PATH=/segtracker/resources
+      - DATABASE_URL=postgresql://segtracker:password@postgres:5432/segtracker
+    volumes:
+      - ./resources:/segtracker/resources
+      - ./backend:/backend
+    networks:
+      - segtracker-network
+    depends_on:
+      - redis
+      - postgres
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: "nvidia"
+              device_ids: ["0"]
+              capabilities: [gpu]
+
+  # React Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_APP_API_URL=/api
+    container_name: frontend
+    ports:
+      - "80:80"
+    networks:
+      - segtracker-network
+    volumes:
+      - ./resources:/segtracker/resources
+    depends_on:
+      - backend
+
+  # React Frontend Service for Dev
+  frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile-dev
+      args:
+        - VITE_APP_API_URL=http://localhost/api
+    container_name: frontend-dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    networks:
+      - segtracker-network
+    depends_on:
+      - backend
+
+  # Redis Service
+  redis:
+    image: redis:alpine
+    container_name: redis
+    networks:
+      - segtracker-network
+    volumes:
+      - ./redis-data:/data
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: segtracker
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: segtracker
+    ports:
+      - "127.0.0.1:54320:5432"
+    networks:
+      - segtracker-network
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+
+networks:
+  segtracker-network:
+    driver: bridge
