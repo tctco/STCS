@@ -17,7 +17,6 @@ frontend/*.local
 # backend
 
 backend/*.db
-<<<<<<< HEAD
 backend/**/__pycache__/
 backend/static/
 backend/trained_models/*
@@ -39,23 +38,7 @@ resources/
 __pycache__
 segCluster/work_dirs
 segCluster/segCluster_data
-=======
-/**/__pycache__/
-backend/static/
-backend/trained_models/*
-backend/exp/
-
-# others
-
-redis-data/
-resources/
-postgres-data/
-ipynbs/
-segCluster/__pycache__
-segCluster/work_dirs
-segCluster/segCluster_data/
->>>>>>> cf46c1403305c6f8c1721ad7bec406eb218527ff
-reproduce_figures/data_and_fig/
+reproduce_figures/data_and_fig
 
 # Editor directories and files
 .vscode/*
