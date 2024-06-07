@@ -21,10 +21,10 @@ const ModelDetailPage: React.FC = () => {
   const [currentImgIdx, setCurrentImageIdx] = useState(0);
   return imageUrls.length > 0 ? (
     <Space direction="vertical" style={{ textAlign: "center" }}>
-      <Title level={3}>{imageUrls[currentImgIdx].split("/").pop()}</Title>
+      <Title level={3}>{imageUrls[currentImgIdx - 1].split("/").pop()}</Title>
       <Image
         height={400}
-        src={"http://localhost/" + imageUrls[currentImgIdx]}
+        src={"http://localhost/" + imageUrls[currentImgIdx - 1]}
       />
       <Pagination
         defaultCurrent={currentImgIdx + 1}

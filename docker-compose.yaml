@@ -70,22 +70,22 @@ services:
       - backend
 
   # React Frontend Service for Dev
-  frontend-dev:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile-dev
-      args:
-        - VITE_APP_API_URL=http://localhost/api
-    container_name: frontend-dev
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/public:/app/public
-    networks:
-      - segtracker-network
-    depends_on:
-      - backend
+  # frontend-dev:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile-dev
+  #     args:
+  #       - VITE_APP_API_URL=http://localhost/api
+  #   container_name: frontend-dev
+  #   ports:
+  #     - "5173:5173"
+  #   volumes:
+  #     - ./frontend/src:/app/src
+  #     - ./frontend/public:/app/public
+  #   networks:
+  #     - segtracker-network
+  #   depends_on:
+  #     - backend
 
   # Redis Service
   redis:

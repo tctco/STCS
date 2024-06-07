@@ -2,6 +2,7 @@ import contextlib
 import torch
 import time
 
+
 class Profile(contextlib.ContextDecorator):
     """
     YOLOv8 Profile class.
@@ -29,8 +30,8 @@ class Profile(contextlib.ContextDecorator):
         """
         Stop timing.
         """
-        self.dt = self.time() - self.start    # delta-time
-        self.t += self.dt    # accumulate dt
+        self.dt = self.time() - self.start  # delta-time
+        self.t += self.dt  # accumulate dt
 
     def time(self):
         """
