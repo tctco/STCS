@@ -39,7 +39,8 @@ export const randomColor = (seed: number | string) => {
 };
 
 export const downloadFile = (data: any, filename: string) => {
-  const blob = new Blob([data], { type: "application/octet-stream" });
+  const content = JSON.stringify(data, null, 2);
+  const blob = new Blob([content], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

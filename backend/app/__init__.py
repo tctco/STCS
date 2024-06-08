@@ -1,5 +1,5 @@
 import os
-from flask import Flask, g, send_from_directory
+from flask import Flask, g, send_from_directory, request, Response
 from flask_cors import CORS
 from .common.database import Session, init_db, engine
 from pathlib import Path
@@ -32,6 +32,21 @@ def create_app():
     app.config["RQ_DASHBOARD_REDIS_URL"] = f"redis://{REDIS_URL}:{REDIS_PORT}"
     app.config.from_object(rq_dashboard.default_settings)
     rq_dashboard.web.setup_rq_connection(app)
+
+    def check_dashboard_auth():
+        username = os.environ.get("RQ_DASHBOARD_USERNAME")
+        password = os.environ.get("RQ_DASHBOARD_PASSWORD")
+        if username is None or password is None:
+            return
+        auth = request.authorization
+        if not auth or not (auth.username == username and auth.password == password):
+            return Response(
+                "Login required",
+                401,
+                {"WWW-Authenticate": 'Basic realm="Login Required"'},
+            )
+
+    rq_dashboard.blueprint.before_request(check_dashboard_auth)
     app.register_blueprint(rq_dashboard.blueprint, url_prefix="/rq")
 
     @app.route("/", methods=["GET"])

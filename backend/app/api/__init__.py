@@ -6,7 +6,7 @@ api = Api(
     description="segTracker.ai API",
     prefix="/api",
     validate=True,
-    doc="/docs",
+    doc="/api/docs",
 )
 
 from .shared_models import api as shared_models_api

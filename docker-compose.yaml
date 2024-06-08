@@ -14,6 +14,8 @@ services:
       - REDIS_PORT=6379
       - RESOURCE_PATH=/segtracker/resources
       - DATABASE_URL=postgresql://segtracker:password@postgres:5432/segtracker
+      - RQ_DASHBOARD_USERNAME=admin
+      - RQ_DASHBOARD_PASSWORD=admin
     volumes:
       - ./resources:/segtracker/resources
       - ./backend:/backend # for debugging
