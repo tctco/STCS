@@ -7,10 +7,6 @@
 
 This is the official implementation of SSTC: Enhanced Multi Animal Tracking and Social Behavior Analysis
 
- 
-> This project is currently used to help researchers replicate our experimental results, and we are still continuously improving it!
->
-> Though I'm also continuously struggling with my exams and internship in the hospital. I'll try my best, sorry :(
 
 ## segTracker.ai
 
@@ -47,26 +43,22 @@ Here are some videos showcasing the pose tracking performance (tested on Lenovo 
 
 ## Quick start
 
-1. Clone this repo to your computer and `cd STCS`
-2. Download the trained models from the release page and place them inside `STCS/backend/trained_models`
+1. Clone this repo with `git clone --recurse-submodules https://github.com/tctco/STCS.git` to your computer and `cd STCS`
+2. Download the [trained models](/tctco/STCS/releases/download/v0.0.1/trained_models.tar) from the release page and place them inside `STCS/backend/trained_models`
 3. Build & run the docker container by `docker compose up` (this container is quite large ~30GB, I'm sorry)
 4. Open your browser and go to `localhost` (you can access segTracker.ai via WAN/LAN by your hosting IP as well)
 5. Convert your video to a codec supported by Chrome Edge browser (we only tested H264)
 6. Upload the video and start tracking!
 
-You need to create a user first (you don't need to input your real email address) to upload your video:
+### How to use?
 
+Check out this video demo!
 
-https://github.com/tctco/STCS/assets/45505657/7af5c86f-c5c3-4de0-9ed3-4cf11bce0d15
+https://github.com/tctco/STCS/assets/45505657/d3c605ac-7455-4e11-bd26-196ec25158ea
 
-
-After some time, you can visualize the tracking result and download the JSON file:
-
-
-
-https://github.com/tctco/STCS/assets/45505657/f6dd5964-652c-4e63-bd48-0cbca1607e81
-
-
+There are also some other APIs you might be interested:
+- `localhost/rq`: the rq-dashboard API, the default password/username is `admin`. Modify this in the `docker-compose.yaml` file.
+- `localhost/api/docs`: the backend APIs with swagger UI.
 
 ## segCluster
 
@@ -86,13 +78,19 @@ https://doi.org/10.6084/m9.figshare.25341859.v1
         
         
         
+        
+        
 
 https://doi.org/10.6084/m9.figshare.25341856.v1
+        
+        
         
         
 
 
 https://doi.org/10.6084/m9.figshare.25594242.v1
+        
+        
         
         
 
