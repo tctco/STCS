@@ -50,19 +50,15 @@ Here are some videos showcasing the pose tracking performance (tested on Lenovo 
 5. Convert your video to a codec supported by Chrome Edge browser (we only tested H264)
 6. Upload the video and start tracking!
 
-You need to create a user first (you don't need to input your real email address) to upload your video:
+### How to use?
 
+Check out this video demo!
 
-https://github.com/tctco/STCS/assets/45505657/7af5c86f-c5c3-4de0-9ed3-4cf11bce0d15
+https://github.com/tctco/STCS/assets/45505657/d3c605ac-7455-4e11-bd26-196ec25158ea
 
-
-After some time, you can visualize the tracking result and download the JSON file:
-
-
-
-https://github.com/tctco/STCS/assets/45505657/f6dd5964-652c-4e63-bd48-0cbca1607e81
-
-
+There are also some other APIs you might be interested:
+- `localhost/rq`: the rq-dashboard API, the default password/username is `admin`. Modify this in the `docker-compose.yaml` file.
+- `localhost/api/docs`: the backend APIs with swagger UI.
 
 ## segCluster
 
