@@ -1,15 +1,16 @@
-from app.algorithm.merger import Merger, Tracklet, Interval
+import ast
+from pathlib import Path
+import os
+from typing import Optional
+import cv2
+import numpy as np
+from app.algorithm.merger import Merger, LibraryMerger, Tracklet, Interval
 from app.algorithm.classifier import MMPretrainClassifier
 from app.algorithm.models import TrackletStat, Datum
 from app.algorithm.common import create_logger
 from app.api.videos.models import Video
 from app.common.database import engine
 from sqlalchemy.orm import sessionmaker
-import ast
-from pathlib import Path
-import os
-import cv2
-import numpy as np
 
 
 def calc_img_shape(img_root, max_crop_size):
@@ -53,6 +54,7 @@ def merge(
     min_confidence,
     soft_border,
     train_ratio=0.9,
+    max_frames_in_model_building: Optional[int] = None,
 ):
     resource_path = Path(resource_path)
     session = sessionmaker(bind=engine)()
@@ -84,25 +86,47 @@ def merge(
         logger,
         scale,
     )
-    merger = Merger(
-        tracklets,
-        max_det,
-        classifier,
-        img_root,
-        exp_root,
-        video_path,
-        logger,
-        session,
-        video_id,
-        confidence_threshold,
-        soft_border,
-        train_ratio,
-        max_frames_per_class=6000,
-        batch_size=batch_size,
-        min_merge_frames=150,
-        apperance_threshold=0.05,
-        min_confidence=min_confidence,
-    )
+    if max_frames_in_model_building is None:
+        merger = Merger(
+            tracklets,
+            max_det,
+            classifier,
+            img_root,
+            exp_root,
+            video_path,
+            logger,
+            session,
+            video_id,
+            confidence_threshold,
+            soft_border,
+            train_ratio,
+            max_frames_per_class=6000,
+            batch_size=batch_size,
+            min_merge_frames=150,
+            apperance_threshold=0.05,
+            min_confidence=min_confidence,
+        )
+    else:
+        merger = LibraryMerger(
+            max_frames_in_model_building,
+            tracklets,
+            max_det,
+            classifier,
+            img_root,
+            exp_root,
+            video_path,
+            logger,
+            session,
+            video_id,
+            confidence_threshold,
+            soft_border,
+            train_ratio,
+            max_frames_per_class=6000,
+            batch_size=batch_size,
+            min_merge_frames=150,
+            apperance_threshold=0.05,
+            min_confidence=min_confidence,
+        )
 
     merger.merge()
     tracks = merger.assigned_tracklets

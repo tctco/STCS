@@ -63,6 +63,12 @@ new_job_request = api.model(
         "segmModel": fields.String(required=True, description="Segm model id"),
         "poseModel": fields.String(required=True, description="Pose model id"),
         "flowModel": fields.String(allow_null=True, description="Flow model id"),
+        "baseVideoId": fields.String(
+            allow_null=True, description="Base ID model (video id)"
+        ),
+        "maxTrainingFrames": fields.Integer(
+            allow_null=True, description="Max training frames when building ID model"
+        ),
     },
 )
 
@@ -159,6 +165,8 @@ class TrackJobResource(Resource):
         segm_model_id = payload.get("segmModel", None)
         pose_model_id = payload.get("poseModel", None)
         flow_model_id = payload.get("flowModel", None)
+        base_video_id = payload.get("baseVideoId", None)
+        max_training_frames = payload.get("maxTrainingFrames", None)
         if enable_flow and flow_model_id is None:
             return error_msg("Flow model id is required if enable flow"), 400
         video = (
@@ -191,7 +199,14 @@ class TrackJobResource(Resource):
         job = job_queue.enqueue(
             track,
             TrackTask(
-                current_user.priority, params, video.id, current_user.id, None, animal
+                current_user.priority,
+                params,
+                video.id,
+                current_user.id,
+                None,
+                animal,
+                base_video_id,
+                max_training_frames,
             ),
             result_ttl=86400,
             job_timeout=86400 * 2,

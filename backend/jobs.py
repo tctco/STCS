@@ -48,6 +48,8 @@ class TrackTask:
     user_id: int
     code: Optional[int]
     animal: str
+    base_video_id: Optional[int]
+    max_training_frames: Optional[int]
 
 
 @dataclass
@@ -520,6 +522,7 @@ def track(task: TrackTask):
         0.9,
         0.6,
         SOFT_BORDER,
+        max_frames_in_model_building=task.max_training_frames
     )
     # cmd = [
     #     f"{sys.executable}",

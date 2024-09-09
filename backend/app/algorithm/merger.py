@@ -911,3 +911,119 @@ class Merger:
             dpi=300,
         )
         self.plot_cnt += 1
+
+
+class LibraryMerger(Merger):
+    def __init__(
+        self,
+        max_frames_in_model_building,
+        tracks: list[Tracklet],
+        max_det: int,
+        cls_model: MMPretrainClassifier,
+        img_root: Path,
+        exp_root: Path,
+        video_path: str,
+        logger: logging.Logger,
+        session,
+        video_id,
+        confidence_threshold: float = 0.95,
+        soft_border: int = SOFT_BORDER,
+        train_ratio=0.9,
+        max_frames_per_class=6000,
+        batch_size=256,
+        min_merge_frames=150,
+        apperance_threshold=0.05,
+        min_confidence=0.6,
+    ) -> None:
+        super().__init__(
+            tracks,
+            max_det,
+            cls_model,
+            img_root,
+            exp_root,
+            video_path,
+            logger,
+            session,
+            video_id,
+            confidence_threshold,
+            soft_border,
+            train_ratio,
+            max_frames_per_class,
+            batch_size,
+            min_merge_frames,
+            apperance_threshold,
+            min_confidence,
+        )
+        self.max_frames_in_model_building = max_frames_in_model_building
+
+    def merge(self):
+        self.logger.info(
+            f"Using max training frames = {self.max_frames_in_model_building}"
+        )
+        self.logger.debug(f"{self.tracklets[0]}\n{self.tracklets[1]}")
+        self.init_tracks_kernel()
+        # get mid point of initial tracks
+        last_frame, max_frame, min_frame = -1, -1, float("inf")
+        for t in self.assigned_tracklets:
+            max_frame = max(max_frame, t.intervals[-1].end)
+            min_frame = min(min_frame, t.intervals[0].start)
+        for t in self.tracklets:
+            last_frame = max(last_frame, t.intervals[-1].end)
+        mid_frame = (max_frame + min_frame) // 2
+        if mid_frame + self.max_frames_in_model_building // 2 > last_frame:
+            upper_bound = last_frame
+            lower_bound = last_frame - self.max_frames_in_model_building
+        elif mid_frame - self.max_frames_in_model_building // 2 < 0:
+            lower_bound = 0
+            upper_bound = self.max_frames_in_model_building
+        else:
+            lower_bound = mid_frame - self.max_frames_in_model_building // 2
+            upper_bound = mid_frame + self.max_frames_in_model_building // 2
+        # filter trackets that overlap with bounds
+        to_be_removed = []
+        for i, t in enumerate(self.tracklets):
+            if t.intervals[-1].end < lower_bound or t.intervals[0].start > upper_bound:
+                to_be_removed.append(i)
+        self.remove_tracklets([], to_be_removed)
+
+        self.plot_tracklets("Established initial tracks")
+        self.update_cls_model(self.calculate_patience(first=True))
+        for iteration in range(self.max_merge_iterations):
+            progress = self.get_assigned_length() / self.get_total_length()
+            set_job_meta("progress", progress)
+            set_job_meta("tracklets", self.get_tracklets_json())
+            self.logger.info(
+                f"Merged: {self.get_assigned_length()}, Total: {self.get_total_length()}, Ratio: {progress:.2%}"
+            )
+            if (
+                len(self.tracklets) <= self.max_det
+                or self.get_assigned_length()
+                >= self.get_total_length() * self.train_ratio
+            ):
+                break
+            self.merge_by_appearance()
+            self.logger.debug("merged by appearance")
+            self.plot_tracklets("merged by appearance")
+
+            self.merge_confirmed_tracklets()
+            self.logger.debug("merged by spatio-temporal overlap")
+            self.plot_tracklets("merged by spatio-temporal overlap")
+            self.logger.info(f"Newly accumulated frames: {self.accumulated_new_frames}")
+
+            self.update_cls_model(patience=self.calculate_patience())
+
+        if iteration == self.max_merge_iterations - 1:
+            self.logger.warning(
+                f"max merge iterations reached: {self.max_merge_iterations}"
+            )
+        self.logger.info(
+            f"Merged: {self.get_assigned_length()}, Total: {self.get_total_length()}, Ratio: {self.get_assigned_length()/self.get_total_length():.2%}"
+        )
+        self.logger.info("finished the main merging process.")
+        if len(self.tracklets) > self.max_det or len(self.dumped) > 0:
+            self.process_dumped()
+        self.logger.info(
+            f"total train time: {self.model.train_timer.t}\ntotal predict time: {self.model.predict_timer.t}"
+        )
+        set_job_meta("progress", 1.0)
+        set_job_meta("tracklets", self.get_tracklets_json())

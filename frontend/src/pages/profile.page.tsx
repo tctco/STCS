@@ -20,6 +20,7 @@ import {
   ProFormDigit,
   ProFormInstance,
   ProFormSelect,
+  ProFormSwitch,
   ProList,
 } from "@ant-design/pro-components";
 import { UploadChangeParam } from "antd/es/upload/interface.js";
@@ -286,6 +287,10 @@ const ConfigForm: React.FC = () => {
       message.error("Please select a flow model!", 10);
       return false;
     }
+    let maxTrainingFrames;
+    if (formData.enableMaxFrames)
+      maxTrainingFrames = Math.round(formData.maxTrainingSec * videoMeta.fps);
+    else maxTrainingFrames = null;
     return userService
       .newTrackJob(
         videoMeta.id,
@@ -294,7 +299,8 @@ const ConfigForm: React.FC = () => {
         formData.animal,
         formData.segmModel,
         formData.poseModel,
-        formData.flowModel
+        formData.flowModel,
+        maxTrainingFrames
       )
       .then((res) => {
         message.success(res.data.message);
@@ -438,6 +444,24 @@ const ConfigForm: React.FC = () => {
                     }))}
                 />
               </ProForm.Group>
+            );
+          }}
+        </ProFormDependency>
+        <ProFormSwitch
+          name="enableMaxFrames"
+          label="Enable maximum frames"
+          initialValue={false}
+        />
+        <ProFormDependency name={["enableMaxFrames"]}>
+          {({ enableMaxFrames }) => {
+            return (
+              <ProFormDigit
+                name="maxTrainingSec"
+                initialValue={3600}
+                min={60}
+                disabled={enableMaxFrames ? false : true}
+                label="Maximum tracking time (seconds)"
+              />
             );
           }}
         </ProFormDependency>
