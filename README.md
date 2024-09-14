@@ -5,7 +5,7 @@
 <img src="./demo/logo.svg" style="width:40%" alt="logo">
 </p>
 
-This is the official implementation of SSTC: Enhanced Multi Animal Tracking and Social Behavior Analysis
+This is the official implementation of Segmentation tracking and clustering system enables accurate multi-animal tracking of social behaviors.
 
 
 ## segTracker.ai
@@ -109,3 +109,29 @@ segCluster_supp_materials 链接/link：https://pan.baidu.com/s/1QdXSHxzjdXpncsx
 We thank OpenMMLab, idTracker.ai, DeepLabCut, SLEAP, TRex/TGrab, SeBA, OCSORT, ByteTrack, YOLOv8... (there are too many to list here, I'm sorry) team for developing wonderful opensource software!
 
 I also thank Professor Li Hao for providing generous help and Ph.D. Lai Chuan for providing his experiment videos.
+
+## Cite our work
+
+```bibtex
+﻿@Article{STCS,
+        author={Tang, Cheng
+        and Zhou, Yang
+        and Zhao, Shuaizhu
+        and Xie, Mingshu
+        and Zhang, Ruizhe
+        and Long, Xiaoyan
+        and Zhu, Lingqiang
+        and Lu, Youming
+        and Ma, Guangzhi
+        and Li, Hao},
+        title={Segmentation tracking and clustering system enables accurate multi-animal tracking of social behaviors},
+        journal={Patterns},
+        year={2024},
+        month={2024/09/14},
+        publisher={Elsevier},
+        issn={2666-3899},
+        doi={10.1016/j.patter.2024.101057},
+        url={https://doi.org/10.1016/j.patter.2024.101057}
+}
+```
+
