@@ -417,9 +417,20 @@ class Merger:
             len(c) == self.max_det
         ), f"len(c) should be {self.max_det}, but get {c}. Please check if the max_det is correct!"
         self.assigned_tracklets = [None] * self.max_det
-        for assigned_id, index in enumerate(c.ids):
-            self.tracklets[index].assigned_id = assigned_id
-            self.assigned_tracklets[assigned_id] = self.tracklets[index]
+        if self.model.freezed:
+            self.logger.info("Model is freezed, predicting identity...")
+            scores = []
+            for index in c.ids:
+                scores.append(self.predict_tracklet_identity(self.tracklets[index]))
+            scores = np.array(scores)
+            matches, *_ = match(-scores)
+            for assigned_id, index in matches:
+                self.tracklets[c.ids[index]].assigned_id = assigned_id.item()
+                self.assigned_tracklets[assigned_id] = self.tracklets[c.ids[index]]
+        else:
+            for assigned_id, index in enumerate(c.ids):
+                self.tracklets[index].assigned_id = assigned_id
+                self.assigned_tracklets[assigned_id] = self.tracklets[index]
         assert None not in self.assigned_tracklets, "None in assigned_tracklets"
         self.assigned_tracklets.sort(key=lambda x: x.assigned_id)
 
@@ -528,7 +539,7 @@ class Merger:
             graph.add_node(i)
             for j in s:
                 graph.add_edge(i, j)
-        self.plot_tracklets_network(graph)
+        # self.plot_tracklets_network(graph)
         cliques = nx.find_cliques(graph)
         to_be_removed = []
         result = []
@@ -736,17 +747,30 @@ class Merger:
 
     def predict_identity(self, max_images: int = 5000):
         for t in tqdm(self.tracklets):
-            ids = t.get_ids()
-            fpaths = []
-            for id in ids:
-                fpaths += [
-                    str(self.img_root / str(id) / x)
-                    for x in os.listdir(self.img_root / f"{id}")
-                ]
-            if len(fpaths) > max_images:
-                fpaths = random.sample(fpaths, max_images)
-            score = self.model.predict(fpaths).mean(axis=0)
+            # ids = t.get_ids()
+            # fpaths = []
+            # for id in ids:
+            #     fpaths += [
+            #         str(self.img_root / str(id) / x)
+            #         for x in os.listdir(self.img_root / f"{id}")
+            #     ]
+            # if len(fpaths) > max_images:
+            #     fpaths = random.sample(fpaths, max_images)
+            score = self.predict_tracklet_identity(t, max_images)
             t.pred_score = score
+
+    def predict_tracklet_identity(self, tracklet: Tracklet, max_images: int = 5000):
+        ids = tracklet.get_ids()
+        fpaths = []
+        for id in ids:
+            fpaths += [
+                str(self.img_root / str(id) / x)
+                for x in os.listdir(self.img_root / f"{id}")
+            ]
+        if len(fpaths) > max_images:
+            fpaths = random.sample(fpaths, max_images)
+        score = self.model.predict(fpaths).mean(axis=0)
+        return score
 
     def _increase_appearance_threshold(self):
         self.apperance_threshold *= 1.5
@@ -829,8 +853,13 @@ class Merger:
                             new_tracklet_id
                         )
         total_length = 0
+        self.logger.debug(f"to be merged {to_be_merged}")
         for s in to_be_merged:
-            total_length += sum(len(self.tracklets[x]) for x in s)
+            total_length += sum(
+                len(self.tracklets[x])
+                for x in s
+                if self.tracklets[x].assigned_id is None
+            )
         if total_length < self.min_merge_frames:
             self._increase_appearance_threshold()
         else:
@@ -843,47 +872,55 @@ class Merger:
         Args:
             title (str, optional): title/description of the tracklets plot. Defaults to "".
         """
+        try:
+            fig, ax = plt.subplots(figsize=(12, 4))
+            for i, t in enumerate(self.tracklets):
+                if i > 300:
+                    break
+                if t.assigned_id is None:
+                    color = "gray"
+                else:
+                    color = random_color(t.assigned_id)
+                    color = (color[0] / 255, color[1] / 255, color[2] / 255)
+                for interval in t.intervals:
+                    ax.plot([interval.start, interval.end], [i, i], color=color)
+                ax.text(
+                    t.intervals[0].start,
+                    i,
+                    f"{i}",
+                    verticalalignment="center",
+                )
+            if title:
+                ax.set_title(title)
 
-        fig, ax = plt.subplots(figsize=(12, 4))
-        for i, t in enumerate(self.tracklets):
-            if t.assigned_id is None:
-                color = "gray"
-            else:
-                color = random_color(t.assigned_id)
-                color = (color[0] / 255, color[1] / 255, color[2] / 255)
-            for interval in t.intervals:
-                ax.plot([interval.start, interval.end], [i, i], color=color)
-            ax.text(
-                t.intervals[0].start,
-                i,
-                f"{i}",
-                verticalalignment="center",
+            fig.savefig(
+                self.plot_path / f"{self.plot_cnt}.png",
+                bbox_inches="tight",
+                dpi=300,
             )
-        if title:
-            ax.set_title(title)
-
-        fig.savefig(
-            self.plot_path / f"{self.plot_cnt}.png",
-            bbox_inches="tight",
-            dpi=300,
-        )
-        plt.close("all")
-        fig, ax = plt.subplots(figsize=(12, 4))
-        for t in self.assigned_tracklets:
-            for interval in t.intervals:
-                ax.plot([interval.start, interval.end], [t.assigned_id, t.assigned_id])
-            ax.text(
-                t.intervals[0].start,
-                t.assigned_id,
-                f"{t.assigned_id}({t.get_ids()})",
-                verticalalignment="center",
+            plt.close("all")
+            fig, ax = plt.subplots(figsize=(12, 4))
+            for i, t in enumerate(self.assigned_tracklets):
+                if i > 300:
+                    break
+                for interval in t.intervals:
+                    ax.plot(
+                        [interval.start, interval.end], [t.assigned_id, t.assigned_id]
+                    )
+                ax.text(
+                    t.intervals[0].start,
+                    t.assigned_id,
+                    f"{t.assigned_id}({t.get_ids()})",
+                    verticalalignment="center",
+                )
+            fig.savefig(
+                self.plot_path / f"{self.plot_cnt}_assigned.png",
+                bbox_inches="tight",
+                dpi=300,
             )
-        fig.savefig(
-            self.plot_path / f"{self.plot_cnt}_assigned.png",
-            bbox_inches="tight",
-            dpi=300,
-        )
-        self.plot_cnt += 1
+            self.plot_cnt += 1
+        except Exception as e:
+            self.logger.error(f"plotting error: {e}")
 
     def plot_tracklets_network(self, graph: nx.Graph, title: str = ""):
         """plot tracklets network
@@ -911,3 +948,272 @@ class Merger:
             dpi=300,
         )
         self.plot_cnt += 1
+
+
+class LibraryMerger(Merger):
+    def __init__(
+        self,
+        max_frames_in_model_building,
+        tracks: list[Tracklet],
+        max_det: int,
+        cls_model: MMPretrainClassifier,
+        img_root: Path,
+        exp_root: Path,
+        video_path: str,
+        logger: logging.Logger,
+        session,
+        video_id,
+        confidence_threshold: float = 0.95,
+        soft_border: int = SOFT_BORDER,
+        train_ratio=0.9,
+        max_frames_per_class=6000,
+        batch_size=256,
+        min_merge_frames=150,
+        apperance_threshold=0.05,
+        min_confidence=0.6,
+    ) -> None:
+        super().__init__(
+            tracks,
+            max_det,
+            cls_model,
+            img_root,
+            exp_root,
+            video_path,
+            logger,
+            session,
+            video_id,
+            confidence_threshold,
+            soft_border,
+            train_ratio,
+            max_frames_per_class,
+            batch_size,
+            min_merge_frames,
+            apperance_threshold,
+            min_confidence,
+        )
+        self.max_frames_in_model_building = max_frames_in_model_building
+
+    def merge(self):
+        self.logger.info(
+            f"Using max training frames = {self.max_frames_in_model_building}"
+        )
+        self.logger.debug(f"{self.tracklets[0]}\n{self.tracklets[1]}")
+        self.init_tracks_kernel()
+        # get mid point of initial tracks
+        last_frame, max_frame, min_frame = -1, -1, float("inf")
+        for t in self.assigned_tracklets:
+            max_frame = max(max_frame, t.intervals[-1].end)
+            min_frame = min(min_frame, t.intervals[0].start)
+        for t in self.tracklets:
+            last_frame = max(last_frame, t.intervals[-1].end)
+        mid_frame = (max_frame + min_frame) // 2
+        if mid_frame + self.max_frames_in_model_building // 2 > last_frame:
+            upper_bound = last_frame
+            lower_bound = last_frame - self.max_frames_in_model_building
+        elif mid_frame - self.max_frames_in_model_building // 2 < 0:
+            lower_bound = 0
+            upper_bound = self.max_frames_in_model_building
+        else:
+            lower_bound = mid_frame - self.max_frames_in_model_building // 2
+            upper_bound = mid_frame + self.max_frames_in_model_building // 2
+        # filter trackets that overlap with bounds
+        to_be_removed = []
+        for i, t in enumerate(self.tracklets):
+            if t.intervals[-1].end < lower_bound or t.intervals[0].start > upper_bound:
+                to_be_removed.append(i)
+        self.remove_tracklets([], to_be_removed)
+
+        self.plot_tracklets("Established initial tracks")
+        self.update_cls_model(self.calculate_patience(first=True))
+        for iteration in range(self.max_merge_iterations):
+            progress = self.get_assigned_length() / self.get_total_length()
+            set_job_meta("progress", progress)
+            set_job_meta("tracklets", self.get_tracklets_json())
+            self.logger.info(
+                f"Merged: {self.get_assigned_length()}, Total: {self.get_total_length()}, Ratio: {progress:.2%}"
+            )
+            if (
+                len(self.tracklets) <= self.max_det
+                or self.get_assigned_length()
+                >= self.get_total_length() * self.train_ratio
+            ):
+                break
+            self.merge_by_appearance()
+            self.logger.debug("merged by appearance")
+            self.plot_tracklets("merged by appearance")
+
+            self.merge_confirmed_tracklets()
+            self.logger.debug("merged by spatio-temporal overlap")
+            self.plot_tracklets("merged by spatio-temporal overlap")
+            self.logger.info(f"Newly accumulated frames: {self.accumulated_new_frames}")
+
+            self.update_cls_model(patience=self.calculate_patience())
+
+        if iteration == self.max_merge_iterations - 1:
+            self.logger.warning(
+                f"max merge iterations reached: {self.max_merge_iterations}"
+            )
+        self.logger.info(
+            f"Merged: {self.get_assigned_length()}, Total: {self.get_total_length()}, Ratio: {self.get_assigned_length()/self.get_total_length():.2%}"
+        )
+        self.logger.info("finished the main merging process.")
+        if len(self.tracklets) > self.max_det or len(self.dumped) > 0:
+            self.process_dumped()
+        self.logger.info(
+            f"total train time: {self.model.train_timer.t}\ntotal predict time: {self.model.predict_timer.t}"
+        )
+        set_job_meta("progress", 1.0)
+        set_job_meta("tracklets", self.get_tracklets_json())
+
+
+class ActiveLibraryMerger(Merger):
+    def __init__(
+        self,
+        max_frames_in_model_building,
+        tracks: list[Tracklet],
+        max_det: int,
+        cls_model: MMPretrainClassifier,
+        img_root: Path,
+        exp_root: Path,
+        video_path: str,
+        logger: logging.Logger,
+        session,
+        video_id,
+        confidence_threshold: float = 0.95,
+        soft_border: int = SOFT_BORDER,
+        train_ratio=0.9,
+        max_frames_per_class=6000,
+        batch_size=256,
+        min_merge_frames=150,
+        apperance_threshold=0.05,
+        min_confidence=0.6,
+    ) -> None:
+        super().__init__(
+            tracks,
+            max_det,
+            cls_model,
+            img_root,
+            exp_root,
+            video_path,
+            logger,
+            session,
+            video_id,
+            confidence_threshold,
+            soft_border,
+            train_ratio,
+            max_frames_per_class,
+            batch_size,
+            min_merge_frames,
+            apperance_threshold,
+            min_confidence,
+        )
+        self.max_frames_in_model_building = max_frames_in_model_building
+        self.suspended = []
+
+    def suspend_tracklets(self, to_be_suspended: list[int]) -> None:
+        """suspend tracklets in to_be_suspended from self.tracklets
+
+        Args:
+            merged (list[int]): list of ids (in self.tracklets) that are merged and should be suspended from self.tracklets
+            to_be_suspended (list[int]): list of ids (in self.tracklets) that are suspended and should be placed in self.suspended
+        """
+        if len(to_be_suspended) > 0:
+            original_ids = []
+            for t in to_be_suspended:
+                original_ids += [x.id for x in self.tracklets[t].intervals]
+            self.logger.warning(
+                f"to be removed is not empty: the original ids are {original_ids}"
+            )
+        self.suspended += [self.tracklets[i] for i in to_be_suspended]
+        need_to_be_removed = to_be_suspended
+        assert len(need_to_be_removed) == len(set(need_to_be_removed))
+        self.tracklets = [
+            t for i, t in enumerate(self.tracklets) if i not in need_to_be_removed
+        ]
+
+    def get_suspend_length(self) -> int:
+        return sum(len(x) for x in self.suspended)
+
+    def step(self):
+        for iteration in range(self.max_merge_iterations):
+            progress = self.get_assigned_length() / self.get_total_length()
+            set_job_meta("progress", progress)
+            set_job_meta("tracklets", self.get_tracklets_json())
+            self.logger.info(
+                f"Merged: {self.get_assigned_length()}, Total: {self.get_total_length()}, Ratio: {progress:.2%}"
+            )
+            if (
+                len(self.tracklets) <= self.max_det
+                or self.get_assigned_length()
+                >= self.get_total_length() * self.train_ratio
+            ):
+                break
+            self.merge_by_appearance()
+            self.logger.debug("merged by appearance")
+            self.plot_tracklets("merged by appearance")
+
+            self.merge_confirmed_tracklets()
+            self.logger.debug("merged by spatio-temporal overlap")
+            self.plot_tracklets("merged by spatio-temporal overlap")
+            self.logger.info(f"Newly accumulated frames: {self.accumulated_new_frames}")
+
+            self.update_cls_model(patience=self.calculate_patience())
+        if iteration == self.max_merge_iterations - 1:
+            self.logger.warning(
+                f"max merge iterations reached: {self.max_merge_iterations}"
+            )
+
+    def process_suspended(self):
+        # starting from the middle of trained frames and try to predict the identity of suspended tracklets
+        self.logger.info("Processing suspended tracklets")
+        self.predict_tracklet_identity()
+
+    def merge(self):
+        self.logger.info(
+            f"Using max training frames = {self.max_frames_in_model_building}"
+        )
+        self.logger.debug(f"{self.tracklets[0]}\n{self.tracklets[1]}")
+        self.init_tracks_kernel()
+        # get mid point of initial tracks
+        last_frame, max_frame, min_frame = -1, -1, float("inf")
+        for t in self.assigned_tracklets:
+            max_frame = max(max_frame, t.intervals[-1].end)
+            min_frame = min(min_frame, t.intervals[0].start)
+        for t in self.tracklets:
+            last_frame = max(last_frame, t.intervals[-1].end)
+        mid_frame = (max_frame + min_frame) // 2
+        if mid_frame + self.max_frames_in_model_building // 2 > last_frame:
+            upper_bound = last_frame
+            lower_bound = last_frame - self.max_frames_in_model_building
+        elif mid_frame - self.max_frames_in_model_building // 2 < 0:
+            lower_bound = 0
+            upper_bound = self.max_frames_in_model_building
+        else:
+            lower_bound = mid_frame - self.max_frames_in_model_building // 2
+            upper_bound = mid_frame + self.max_frames_in_model_building // 2
+        # filter trackets that overlap with bounds
+        to_be_suspended = []
+        for i, t in enumerate(self.tracklets):
+            if t.intervals[-1].end < lower_bound or t.intervals[0].start > upper_bound:
+                to_be_suspended.append(i)
+        self.suspend_tracklets(to_be_suspended)
+
+        self.plot_tracklets("Established initial tracks")
+        self.update_cls_model(self.calculate_patience(first=True))
+
+        self.step()
+        while self.get_assigned_length() / self.get_suspend_length() < 9:  # 0.9 / 0.1
+            self.process_suspended()
+            self.step()
+
+        self.logger.info(
+            f"Merged: {self.get_assigned_length()}, Total: {self.get_total_length()}, Ratio: {self.get_assigned_length()/self.get_total_length():.2%}"
+        )
+        self.logger.info("finished the main merging process.")
+        if len(self.tracklets) > self.max_det or len(self.dumped) > 0:
+            self.process_dumped()
+        self.logger.info(
+            f"total train time: {self.model.train_timer.t}\ntotal predict time: {self.model.predict_timer.t}"
+        )
+        set_job_meta("progress", 1.0)
+        set_job_meta("tracklets", self.get_tracklets_json())

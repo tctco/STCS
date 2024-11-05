@@ -3,7 +3,6 @@ import numpy as np
 from mmengine.runner import Runner
 from mmengine import Config
 from pathlib import Path
-import os.path as osp
 import os
 from app.algorithm.timer import Profile
 import shutil
@@ -49,9 +48,7 @@ class MMPretrainClassifier:
         self.max_det = max_det
 
         self.work_dir: Path = Path(self.file_save_path) / Path(config).stem
-        # if self.work_dir.exists():
-        #     shutil.rmtree(self.work_dir)
-        # self.work_dir.mkdir(parents=True, exist_ok=True)
+        self.freezed = False
 
         self.logger = logger
         self.train_timer = Profile()
@@ -88,6 +85,18 @@ class MMPretrainClassifier:
             scores = [p.pred_score.detach().cpu().numpy() for p in prediction]
             scores_list.extend(scores)
         return np.array(scores_list)
+
+    def freeze(self):
+        if "mobilenetv3" in str(self.work_dir):
+            self.config.model.backbone.frozen_stages = 11
+            self.freezed = True
+            self.model = init_model(self.config, self.checkpoint, device=self.device)
+        elif "osnet" in str(self.work_dir):
+            self.config.model.backbone.frozen_stages = 5
+            self.freezed = True
+            self.model = init_model(self.config, self.checkpoint, device=self.device)
+        else:
+            raise ValueError("Model not supported")
 
     def train(self, patience: int):
         best_model = None

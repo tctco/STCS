@@ -30,7 +30,11 @@ class UserService {
     animal: string,
     segmModel: string,
     poseModel: string,
-    flowModel: null | string
+    flowModel: null | string,
+    maxTrainingFrames: null | number,
+    baseVideoId: null | number,
+    enableStage1: boolean,
+    enableStage2: boolean
   ) {
     console.log({
       videoId,
@@ -40,10 +44,26 @@ class UserService {
       segmModel,
       poseModel,
       flowModel,
+      maxTrainingFrames,
+      baseVideoId,
+      enableStage1,
+      enableStage2,
     });
     return axios.put(
       "jobs/track",
-      { videoId, maxDet, flow, animal, segmModel, poseModel, flowModel },
+      {
+        videoId,
+        maxDet,
+        flow,
+        animal,
+        segmModel,
+        poseModel,
+        flowModel,
+        maxTrainingFrames,
+        baseVideoId,
+        enableStage1,
+        enableStage2,
+      },
       { headers: authHeader() }
     );
   }

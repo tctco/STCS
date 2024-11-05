@@ -1,15 +1,16 @@
-from app.algorithm.merger import Merger, Tracklet, Interval
+import ast
+from pathlib import Path
+import os
+from typing import Optional
+import cv2
+import numpy as np
+from app.algorithm.merger import Merger, LibraryMerger, Tracklet, Interval
 from app.algorithm.classifier import MMPretrainClassifier
 from app.algorithm.models import TrackletStat, Datum
 from app.algorithm.common import create_logger
 from app.api.videos.models import Video
 from app.common.database import engine
 from sqlalchemy.orm import sessionmaker
-import ast
-from pathlib import Path
-import os
-import cv2
-import numpy as np
 
 
 def calc_img_shape(img_root, max_crop_size):
@@ -53,6 +54,8 @@ def merge(
     min_confidence,
     soft_border,
     train_ratio=0.9,
+    max_frames_in_model_building: int = -1,
+    transfer_base_video_id: int = -1,
 ):
     resource_path = Path(resource_path)
     session = sessionmaker(bind=engine)()
@@ -62,6 +65,7 @@ def merge(
         / f"exp/{video.user_id}/{video.name.split('.')[0]}_{video.original_name.split('.')[0]}"
     )
     logger = create_logger("stage2", str(exp_root / "stage2.log"))
+    logger.info(f"max frames in model building: {max_frames_in_model_building}")
     tracklets = (
         session.query(TrackletStat).filter(TrackletStat.video_id == video_id).all()
     )
@@ -84,25 +88,68 @@ def merge(
         logger,
         scale,
     )
-    merger = Merger(
-        tracklets,
-        max_det,
-        classifier,
-        img_root,
-        exp_root,
-        video_path,
-        logger,
-        session,
-        video_id,
-        confidence_threshold,
-        soft_border,
-        train_ratio,
-        max_frames_per_class=6000,
-        batch_size=batch_size,
-        min_merge_frames=150,
-        apperance_threshold=0.05,
-        min_confidence=min_confidence,
-    )
+    if transfer_base_video_id >= 0:
+        base_video = (
+            session.query(Video).filter(Video.id == transfer_base_video_id).first()
+        )
+        base_exp_root = (
+            resource_path
+            / f"exp/{base_video.user_id}/{base_video.name.split('.')[0]}_{base_video.original_name.split('.')[0]}"
+        )
+        base_cls_model_save_path = base_exp_root / "cls"
+        base_model_checkpoint = (
+            base_cls_model_save_path / Path(cls_config).stem / "best_accuracy.pth"
+        )
+        if base_model_checkpoint.exists():
+            classifier.config.load_from = str(base_model_checkpoint)
+            try:
+                classifier.freeze()
+            except ValueError:
+                logger.error("Failed to freeze model")
+        else:
+            logger.error(f"Base model checkpoint not found: {base_model_checkpoint}")
+
+    if max_frames_in_model_building < 0:
+        merger = Merger(
+            tracklets,
+            max_det,
+            classifier,
+            img_root,
+            exp_root,
+            video_path,
+            logger,
+            session,
+            video_id,
+            confidence_threshold,
+            soft_border,
+            train_ratio,
+            max_frames_per_class=6000,
+            batch_size=batch_size,
+            min_merge_frames=150,
+            apperance_threshold=0.05,
+            min_confidence=min_confidence,
+        )
+    else:
+        merger = LibraryMerger(
+            max_frames_in_model_building,
+            tracklets,
+            max_det,
+            classifier,
+            img_root,
+            exp_root,
+            video_path,
+            logger,
+            session,
+            video_id,
+            confidence_threshold,
+            soft_border,
+            train_ratio,
+            max_frames_per_class=6000,
+            batch_size=batch_size,
+            min_merge_frames=150,
+            apperance_threshold=0.05,
+            min_confidence=min_confidence,
+        )
 
     merger.merge()
     tracks = merger.assigned_tracklets
