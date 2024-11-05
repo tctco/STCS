@@ -54,7 +54,8 @@ def merge(
     min_confidence,
     soft_border,
     train_ratio=0.9,
-    max_frames_in_model_building: Optional[int] = None,
+    max_frames_in_model_building: int = -1,
+    transfer_base_video_id: int = -1,
 ):
     resource_path = Path(resource_path)
     session = sessionmaker(bind=engine)()
@@ -64,6 +65,7 @@ def merge(
         / f"exp/{video.user_id}/{video.name.split('.')[0]}_{video.original_name.split('.')[0]}"
     )
     logger = create_logger("stage2", str(exp_root / "stage2.log"))
+    logger.info(f"max frames in model building: {max_frames_in_model_building}")
     tracklets = (
         session.query(TrackletStat).filter(TrackletStat.video_id == video_id).all()
     )
@@ -86,7 +88,28 @@ def merge(
         logger,
         scale,
     )
-    if max_frames_in_model_building is None:
+    if transfer_base_video_id >= 0:
+        base_video = (
+            session.query(Video).filter(Video.id == transfer_base_video_id).first()
+        )
+        base_exp_root = (
+            resource_path
+            / f"exp/{base_video.user_id}/{base_video.name.split('.')[0]}_{base_video.original_name.split('.')[0]}"
+        )
+        base_cls_model_save_path = base_exp_root / "cls"
+        base_model_checkpoint = (
+            base_cls_model_save_path / Path(cls_config).stem / "best_accuracy.pth"
+        )
+        if base_model_checkpoint.exists():
+            classifier.config.load_from = str(base_model_checkpoint)
+            try:
+                classifier.freeze()
+            except ValueError:
+                logger.error("Failed to freeze model")
+        else:
+            logger.error(f"Base model checkpoint not found: {base_model_checkpoint}")
+
+    if max_frames_in_model_building < 0:
         merger = Merger(
             tracklets,
             max_det,

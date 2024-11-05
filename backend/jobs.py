@@ -50,6 +50,8 @@ class TrackTask:
     animal: str
     base_video_id: Optional[int]
     max_training_frames: Optional[int]
+    stage1: bool
+    stage2: bool
 
 
 @dataclass
@@ -492,38 +494,44 @@ def track(task: TrackTask):
     else:
         flow_config_file = ""
         flow_checkpoint_file = ""
-
-    online_track(
-        resource_path,
-        task.video_id,
-        MAX_WIDTH_HEIGHT,
-        task.params.max_det,
-        DET_BATCH_SIZE,
-        task.params.enable_flow,
-        CONF_THRESH,
-        NMS_THRESH,
-        IOU_THRESHOLD,
-        MAX_AGE,
-        det_config_file,
-        det_checkpoint_file,
-        pose_config_file,
-        pose_checkpoint_file,
-        flow_config_file,
-        flow_checkpoint_file,
-    )
-    merge(
-        resource_path,
-        task.video_id,
-        task.params.max_det,
-        CLS_CONFIG_FILE,
-        CLS_CHECKPOINT_FILE,
-        BATCH_SIZE,
-        256,
-        0.9,
-        0.6,
-        SOFT_BORDER,
-        max_frames_in_model_building=task.max_training_frames
-    )
+    if task.stage1:
+        online_track(
+            resource_path,
+            task.video_id,
+            MAX_WIDTH_HEIGHT,
+            task.params.max_det,
+            DET_BATCH_SIZE,
+            task.params.enable_flow,
+            CONF_THRESH,
+            NMS_THRESH,
+            IOU_THRESHOLD,
+            MAX_AGE,
+            det_config_file,
+            det_checkpoint_file,
+            pose_config_file,
+            pose_checkpoint_file,
+            flow_config_file,
+            flow_checkpoint_file,
+        )
+    if task.max_training_frames is None:
+        task.max_training_frames = -1
+    if task.base_video_id is None:
+        task.base_video_id = -1
+    if task.stage2:
+        merge(
+            resource_path,
+            task.video_id,
+            task.params.max_det,
+            CLS_CONFIG_FILE,
+            CLS_CHECKPOINT_FILE,
+            BATCH_SIZE,
+            256,
+            0.9,
+            0.6,
+            SOFT_BORDER,
+            max_frames_in_model_building=task.max_training_frames,
+            transfer_base_video_id=task.base_video_id,
+        )
     # cmd = [
     #     f"{sys.executable}",
     #     "track_stage1.py",
@@ -549,9 +557,10 @@ def track(task: TrackTask):
     # return_code = subprocess.call(cmd)
     # if return_code != 0:
     #     raise Exception("Error occurred while performing tracking stage 2")
-    video.analyzed = True
-    session.commit()
-    generate_json(session, task, video)
+    if task.stage2:
+        video.analyzed = True
+        session.commit()
+        generate_json(session, task, video)
     session.close()
     return 0
 

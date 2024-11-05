@@ -1,5 +1,9 @@
-CLS_CONFIG_FILE = "./trained_models/arcface/osnet_x0_25.py"
-CLS_CHECKPOINT_FILE = "./trained_models/arcface/osnet_x0_25_imagenet_renamed.pth"
+# CLS_CONFIG_FILE = "./trained_models/arcface/osnet_x0_25.py"
+# CLS_CHECKPOINT_FILE = "./trained_models/arcface/osnet_x0_25_imagenet_renamed.pth"
+CLS_CONFIG_FILE = "./trained_models/configs/id-configs/mobilenetv3-075.py"
+CLS_CHECKPOINT_FILE = (
+    "./trained_models/configs/id-configs/mobilenetv3-small-075_3rdparty_in1k.pth"
+)
 VISUALIZE_MASK = False
 VIDEO_NAME = "cropped_cage3r1r2"
 MAX_DET = 4
