@@ -61,7 +61,7 @@ class MMPoseTopDownEstimator(AbstractPoseEstimator):
         data_list = []
         result_det_groups = []
         for image, det_group in zip(images, dets):
-            if dets is None:
+            if det_group is None:
                 continue
             for box, score in zip(det_group.bboxes, det_group.scores):
                 data_info = dict(

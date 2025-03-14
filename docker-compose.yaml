@@ -80,7 +80,7 @@ services:
         - VITE_APP_API_URL=http://localhost/api
     container_name: frontend-dev
     ports:
-      - "5173:5173"
+      - "16005:16005"
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public

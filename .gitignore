@@ -15,7 +15,7 @@ frontend/dist-ssr
 frontend/*.local
 
 # backend
-
+*.pth
 backend/*.db
 backend/**/__pycache__/
 backend/static/

@@ -54,7 +54,9 @@ def merge(
     min_confidence,
     soft_border,
     train_ratio=0.9,
-    max_frames_in_model_building: Optional[int] = None,
+    max_frames_in_model_building: int = -1,
+    transfer_base_video_id: int = -1,
+    resume: bool = False,
 ):
     resource_path = Path(resource_path)
     session = sessionmaker(bind=engine)()
@@ -64,6 +66,7 @@ def merge(
         / f"exp/{video.user_id}/{video.name.split('.')[0]}_{video.original_name.split('.')[0]}"
     )
     logger = create_logger("stage2", str(exp_root / "stage2.log"))
+    logger.info(f"max frames in model building: {max_frames_in_model_building}")
     tracklets = (
         session.query(TrackletStat).filter(TrackletStat.video_id == video_id).all()
     )
@@ -86,7 +89,28 @@ def merge(
         logger,
         scale,
     )
-    if max_frames_in_model_building is None:
+    if transfer_base_video_id >= 0:
+        base_video = (
+            session.query(Video).filter(Video.id == transfer_base_video_id).first()
+        )
+        base_exp_root = (
+            resource_path
+            / f"exp/{base_video.user_id}/{base_video.name.split('.')[0]}_{base_video.original_name.split('.')[0]}"
+        )
+        base_cls_model_save_path = base_exp_root / "cls"
+        base_model_checkpoint = (
+            base_cls_model_save_path / Path(cls_config).stem / "best_accuracy.pth"
+        )
+        if base_model_checkpoint.exists():
+            classifier.config.load_from = str(base_model_checkpoint)
+            try:
+                classifier.freeze()
+            except ValueError:
+                logger.error("Failed to freeze model")
+        else:
+            logger.error(f"Base model checkpoint not found: {base_model_checkpoint}")
+
+    if max_frames_in_model_building < 0:
         merger = Merger(
             tracklets,
             max_det,
@@ -105,6 +129,7 @@ def merge(
             min_merge_frames=150,
             apperance_threshold=0.05,
             min_confidence=min_confidence,
+            resume=resume,
         )
     else:
         merger = LibraryMerger(
@@ -130,6 +155,7 @@ def merge(
 
     merger.merge()
     tracks = merger.assigned_tracklets
+    data_belong_to_this_video = session.query(Datum).filter(Datum.video_id == video_id)
     for i, t in enumerate(tracks):
         ids = t.get_ids()
         # tracklets = (
@@ -137,7 +163,7 @@ def merge(
         # )
         # for tracklet in tracklets:
         #     tracklet.track_id = i
-        data = session.query(Datum).filter(Datum.raw_track_id.in_(ids)).all()
+        data = data_belong_to_this_video.filter(Datum.raw_track_id.in_(ids))
         for d in data:
             d.track_id = i + 1
     session.commit()
