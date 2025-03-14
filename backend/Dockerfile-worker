@@ -18,7 +18,8 @@ ENV TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0 7.5 8.0 8.6+PTX" \
 
 # (Optional, use Mirror to speed up downloads)
 RUN sed -i 's/http:\/\/archive.ubuntu.com\/ubuntu\//http:\/\/mirrors.aliyun.com\/ubuntu\//g' /etc/apt/sources.list && \
-   pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+    pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+# RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 
 # Install the required packages
 RUN apt-get update \
