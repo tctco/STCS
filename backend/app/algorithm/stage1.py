@@ -3,6 +3,7 @@ import shutil
 import cv2
 import mmcv
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import func
 from tqdm import tqdm
 from app.algorithm.det import MMDetImageDetector, YOLODetector
 from app.algorithm.pose import YOLOPoseBottomUpEstimator, MMPoseTopDownEstimator
@@ -18,12 +19,16 @@ from app.api.videos.models import Video
 from app.algorithm.common import create_logger, set_job_meta
 
 
-def batch_frame_generator(video: mmcv.VideoReader, batch_size=1, max_frame=-1):
+def batch_frame_generator(
+    video: mmcv.VideoReader, batch_size=1, max_frame=-1, resume_from=-1
+):
     batch = []
     frame_indexes = []
+    max_frame = max_frame if max_frame > 0 else len(video)
     for i, frame in enumerate(tqdm(video)):
-        max_frame = max_frame if max_frame > 0 else len(video)
-        if i >= max_frame:
+        if i <= resume_from:
+            continue
+        if i > max_frame:
             yield batch, frame_indexes
             batch, frame_indexes = [], []
             break
@@ -61,19 +66,40 @@ def online_track(
     pose_checkpoint_file: str,
     flow_config_file: str,
     flow_checkpoint_file: str,
+    resume: bool,
     max_frame=-1,
 ):
     session = sessionmaker(bind=engine)()
     video = session.query(Video).filter(Video.id == video_id).first()
     assert video is not None, f"Video with id {video_id} not found"
-    session.query(Datum).filter(Datum.video_id == video_id).delete()
-    session.query(TrackletStat).filter(TrackletStat.video_id == video_id).delete()
-
     file_save_path = Path(
         f"{resource_path}/exp/{video.user_id}/{video.name.split('.')[0]}_{video.original_name.split('.')[0]}"
     )
-    if file_save_path.exists():
-        shutil.rmtree(file_save_path)
+    if resume:
+        resume_from_frame = (
+            session.query(func.max(Datum.frame))
+            .filter(Datum.video_id == video.id)
+            .scalar()
+        )
+        resume_from_tracklet = (
+            session.query(func.max(Datum.raw_track_id))
+            .filter(Datum.video_id == video.id)
+            .scalar()
+        )
+        if (
+            resume_from_frame is None
+            or resume_from_tracklet is None
+            or not file_save_path.exists()
+        ):
+            resume_from_frame = 0
+            resume_from_tracklet = 0
+    else:
+        resume_from_frame = 0
+        resume_from_tracklet = 0
+        session.query(Datum).filter(Datum.video_id == video_id).delete()
+        session.query(TrackletStat).filter(TrackletStat.video_id == video_id).delete()
+        if file_save_path.exists():
+            shutil.rmtree(file_save_path)
     file_save_path.mkdir(parents=True, exist_ok=True)
     logger = create_logger("stage1", str(file_save_path / "stage1.log"))
     set_job_meta("stage", 1)
@@ -96,6 +122,7 @@ def online_track(
         flow_config_file=flow_config_file,
         flow_checkpoint_file=flow_checkpoint_file,
         max_frame=max_frame,
+        resume=resume,
     )
 
     vpath = Path(resource_path) / f"videos/{video.user_id}/{video.name}"
@@ -115,7 +142,7 @@ def online_track(
         scale = 1
 
     batch_video_reader = batch_frame_generator(
-        cap, batch_size=batch_size, max_frame=max_frame
+        cap, batch_size=batch_size, max_frame=max_frame, resume_from=resume_from_frame
     )
 
     if det_config_file == "YOLO":
@@ -152,11 +179,19 @@ def online_track(
                 checkpoint=flow_checkpoint_file,
             )
         tracker = FlowTracker(
-            max_age=max_age, iou_threshold=iou_threshold, w=cap.width, h=cap.height
+            max_age=max_age,
+            iou_threshold=iou_threshold,
+            w=cap.width,
+            h=cap.height,
+            resume_from_tracklet=resume_from_tracklet,
         )
     else:
         tracker = MaskTracker(
-            max_age=max_age, iou_threshold=iou_threshold, w=cap.width, h=cap.height
+            max_age=max_age,
+            iou_threshold=iou_threshold,
+            w=cap.width,
+            h=cap.height,
+            resume_from_tracklet=resume_from_tracklet,
         )
 
     for batch, frame_indexes in batch_video_reader:
@@ -172,6 +207,8 @@ def online_track(
             flows = [None] * len(batch)
 
         for frame, flow, pose, frame_idx in zip(batch, flows, poses, frame_indexes):
+            if pose is None:
+                continue
             if max_det > 1:
                 if enable_flow:
                     ids, dead_tracklets = tracker.update(flow, pose, frame_idx)

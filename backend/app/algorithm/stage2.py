@@ -56,6 +56,7 @@ def merge(
     train_ratio=0.9,
     max_frames_in_model_building: int = -1,
     transfer_base_video_id: int = -1,
+    resume: bool = False,
 ):
     resource_path = Path(resource_path)
     session = sessionmaker(bind=engine)()
@@ -128,6 +129,7 @@ def merge(
             min_merge_frames=150,
             apperance_threshold=0.05,
             min_confidence=min_confidence,
+            resume=resume,
         )
     else:
         merger = LibraryMerger(
@@ -153,6 +155,7 @@ def merge(
 
     merger.merge()
     tracks = merger.assigned_tracklets
+    data_belong_to_this_video = session.query(Datum).filter(Datum.video_id == video_id)
     for i, t in enumerate(tracks):
         ids = t.get_ids()
         # tracklets = (
@@ -160,7 +163,7 @@ def merge(
         # )
         # for tracklet in tracklets:
         #     tracklet.track_id = i
-        data = session.query(Datum).filter(Datum.raw_track_id.in_(ids)).all()
+        data = data_belong_to_this_video.filter(Datum.raw_track_id.in_(ids))
         for d in data:
             d.track_id = i + 1
     session.commit()

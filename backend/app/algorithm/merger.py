@@ -183,6 +183,7 @@ class Merger:
         min_merge_frames=150,
         apperance_threshold=0.05,
         min_confidence=0.6,
+        resume=False,
     ) -> None:
         self.tracklets: list[Tracklet] = sorted(
             tracks, key=lambda x: x.intervals[0].start
@@ -209,6 +210,7 @@ class Merger:
         self.apperance_threshold = apperance_threshold  # dynamic
         self._appearance_threshold = apperance_threshold
         self.min_confidence = min_confidence
+        self.resume = resume
 
         self.accumulated_new_frames = 0
         self.trained_times = {}  # tracklet.id -> number of times trained
@@ -230,7 +232,19 @@ class Merger:
         self.init_tracks_kernel()
         self.logger.debug(f"{self.tracklets[1]}")
         self.plot_tracklets("Established initial tracks")
-        self.update_cls_model(self.calculate_patience(first=True))
+        if self.resume:
+            try:
+                self.logger.info("Resuming from previous state, skip training")
+                self.model.load_best_model()
+                self.merge_by_appearance()
+                self.merge_confirmed_tracklets()
+                self.plot_tracklets("Resumed")
+                self.update_cls_model(self.calculate_patience())
+            except FileNotFoundError:
+                self.logger.error("Failed to load best model")
+                self.update_cls_model(self.calculate_patience(first=True))
+        else:
+            self.update_cls_model(self.calculate_patience(first=True))
         for iteration in range(self.max_merge_iterations):
             progress = self.get_assigned_length() / self.get_total_length()
             set_job_meta("progress", progress)
@@ -600,6 +614,7 @@ class Merger:
                         if id2 == id1:
                             continue
                         confirmed = confirmed.intersection(conflict_list[id2])
+                    confirmed = confirmed - set(to_be_removed)
                     self.logger.debug(f"clique {c}: confirmed {confirmed}")
                     if (
                         len(confirmed) >= 2
@@ -763,12 +778,16 @@ class Merger:
         ids = tracklet.get_ids()
         fpaths = []
         for id in ids:
+            if not Path(self.img_root / str(id)).exists():
+                continue
             fpaths += [
                 str(self.img_root / str(id) / x)
                 for x in os.listdir(self.img_root / f"{id}")
             ]
         if len(fpaths) > max_images:
             fpaths = random.sample(fpaths, max_images)
+        if len(fpaths) == 0:
+            return np.zeros(self.max_det)
         score = self.model.predict(fpaths).mean(axis=0)
         return score
 
@@ -787,6 +806,7 @@ class Merger:
         self.predict_identity()
         conflict_list = self.get_conflict_list(self.soft_border)
         to_be_merged = [set() for _ in range(self.max_det)]
+        newly_assigned_tracks = {}
         for i, t in enumerate(self.tracklets):
             pred_class, pred_score = t.pred_score.argmax(), t.pred_score.max()
             if t.assigned_id is not None:
@@ -799,6 +819,7 @@ class Merger:
                 ), f"predicted class not equal to assigned class {pred_class} != {t.assigned_id}"
             if pred_score > self.conf_threshold:
                 to_be_merged[pred_class].add(i)
+                newly_assigned_tracks[i] = pred_class
 
         total_length = 0
         for s in to_be_merged:
@@ -825,7 +846,7 @@ class Merger:
             )
         cliques, to_be_removed = self.detect_cliques(conflict_list)
         target_scores = np.array([x.pred_score for x in self.assigned_tracklets])
-        newly_assigned_tracks = {}
+
         for c in cliques:
             ids = c.ids
             scores = np.array([self.tracklets[id].pred_score for id in ids])
@@ -836,9 +857,16 @@ class Merger:
                 for i, j in matches:
                     assigned_tracklet_id = i
                     new_tracklet_id = ids[j]
-                    if newly_assigned_tracks.get(new_tracklet_id) in [None, i]:
+                    if newly_assigned_tracks.get(new_tracklet_id) is None:
                         newly_assigned_tracks[new_tracklet_id] = assigned_tracklet_id
                         to_be_merged[assigned_tracklet_id].add(new_tracklet_id)
+                    elif newly_assigned_tracks[new_tracklet_id] == assigned_tracklet_id:
+                        continue
+                    elif (
+                        newly_assigned_tracks[new_tracklet_id] != assigned_tracklet_id
+                        and processing_dumped
+                    ):
+                        continue
                     else:  # 一个新tracklet被分配给多个track
                         self.logger.warning(
                             f"conflict clique detected for tracklet {new_tracklet_id} (assigned {newly_assigned_tracks.get(new_tracklet_id)} and {assigned_tracklet_id})"

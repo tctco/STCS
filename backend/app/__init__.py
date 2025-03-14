@@ -69,9 +69,9 @@ def create_app():
     from jobs import task_queue
     from rq.command import send_stop_job_command
 
-    jids = task_queue.started_job_registry.get_job_ids()
-    for jid in jids:
-        send_stop_job_command(task_queue.connection, jid)
+    # jids = task_queue.started_job_registry.get_job_ids()
+    # for jid in jids:
+    #     send_stop_job_command(task_queue.connection, jid)
 
     @app.before_request
     def create_session():

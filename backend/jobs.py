@@ -51,7 +51,9 @@ class TrackTask:
     base_video_id: Optional[int]
     max_training_frames: Optional[int]
     stage1: bool
+    resume_stage1: bool
     stage2: bool
+    resume_stage2: bool
 
 
 @dataclass
@@ -512,6 +514,7 @@ def track(task: TrackTask):
             pose_checkpoint_file,
             flow_config_file,
             flow_checkpoint_file,
+            task.resume_stage1,
         )
     if task.max_training_frames is None:
         task.max_training_frames = -1
@@ -531,6 +534,7 @@ def track(task: TrackTask):
             SOFT_BORDER,
             max_frames_in_model_building=task.max_training_frames,
             transfer_base_video_id=task.base_video_id,
+            resume=task.resume_stage2,
         )
     # cmd = [
     #     f"{sys.executable}",

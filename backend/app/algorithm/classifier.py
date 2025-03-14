@@ -98,6 +98,15 @@ class MMPretrainClassifier:
         else:
             raise ValueError("Model not supported")
 
+    def load_best_model(self):
+        if (self.work_dir / "best_accuracy.pth").exists():
+            self.config.load_from = str(self.work_dir / "best_accuracy.pth")
+        else:
+            raise FileNotFoundError(f"Best model not found in {self.work_dir}")
+        self.model = init_model(
+            self.config, str(self.work_dir / "best_accuracy.pth"), device=self.device
+        )
+
     def train(self, patience: int):
         best_model = None
         if (self.work_dir / "best_accuracy.pth").exists():

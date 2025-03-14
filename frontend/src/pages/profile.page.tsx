@@ -11,6 +11,7 @@ import {
   Popconfirm,
   Progress,
   Space,
+  Collapse,
 } from "antd";
 import {
   ModalForm,
@@ -41,7 +42,7 @@ import { randomColor } from "../utils";
 import VerticalSplitPanel from "../components/VerticalSplitPanel.jsx";
 import { VideoProvider, useVideo } from "../context/videoProvider";
 import { JobProvider, useJob } from "../context/JobProvider";
-import { VideoTracksPlot } from "../charts/TrackletsPlot.js";
+// import { VideoTracksPlot } from "../charts/TrackletsPlot.js";
 import ButtonWithConfirmation from "../components/ConfirmButton.js";
 
 function getStatusColor(status: string) {
@@ -133,9 +134,9 @@ const ProfilePage = () => {
                   </>
                 </TabContainer>
               </Resizer>
-              <TabContainer title="Tracklets">
+              {/* <TabContainer title="Tracklets">
                 <VideoTracksPlot />
-              </TabContainer>
+              </TabContainer> */}
             </>
           }
         />
@@ -329,7 +330,9 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ videos }) => {
         maxTrainingFrames,
         baseVideoId,
         formData.enableStage1,
-        formData.enableStage2
+        formData.resumeStage1,
+        formData.enableStage2,
+        formData.resumeStage2
       )
       .then((res) => {
         message.success(res.data.message);
@@ -476,63 +479,85 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ videos }) => {
             );
           }}
         </ProFormDependency>
-        <ProForm.Group>
-          <ProFormSwitch
-            name="enableMaxFrames"
-            label="Enable maximum frames"
-            initialValue={false}
-          />
-          <ProFormDependency name={["enableMaxFrames"]}>
-            {({ enableMaxFrames }) => {
-              return (
-                <ProFormDigit
-                  name="maxTrainingSec"
-                  initialValue={3600}
-                  min={60}
-                  disabled={enableMaxFrames ? false : true}
-                  label="Maximum tracking time (seconds)"
-                />
-              );
-            }}
-          </ProFormDependency>
-        </ProForm.Group>
-        <ProForm.Group>
-          <ProFormSwitch
-            name="enableTransfer"
-            label="Enable Transfer Learning"
-          />
-          <ProFormDependency name={["enableTransfer"]}>
-            {({ enableTransfer }) => {
-              return (
-                <ProFormSelect
-                  name="baseVideoId"
-                  label="Select a base video"
-                  disabled={!enableTransfer}
-                  options={videos
-                    .filter((v) => v.analyzed)
-                    .map((v) => {
-                      return {
-                        value: v.id,
-                        label: v.name,
-                      };
-                    })}
-                />
-              );
-            }}
-          </ProFormDependency>
-        </ProForm.Group>
-        <ProForm.Group>
-          <ProFormSwitch
-            name="enableStage1"
-            label="Enable Stage 1"
-            initialValue={true}
-          />
-          <ProFormSwitch
-            name="enableStage2"
-            label="Enable Stage 2"
-            initialValue={true}
-          />
-        </ProForm.Group>
+        <Collapse
+          items={[
+            {
+              key: "1",
+              label: "Advanced Settings",
+              children: (
+                <>
+                  <ProForm.Group>
+                    <ProFormSwitch
+                      name="enableMaxFrames"
+                      label="Enable maximum frames"
+                      initialValue={false}
+                    />
+                    <ProFormDependency name={["enableMaxFrames"]}>
+                      {({ enableMaxFrames }) => {
+                        return (
+                          <ProFormDigit
+                            name="maxTrainingSec"
+                            initialValue={3600}
+                            min={60}
+                            disabled={enableMaxFrames ? false : true}
+                            label="Maximum tracking time (seconds)"
+                          />
+                        );
+                      }}
+                    </ProFormDependency>
+                  </ProForm.Group>
+                  <ProForm.Group>
+                    <ProFormSwitch
+                      name="enableTransfer"
+                      label="Enable Transfer Learning"
+                    />
+                    <ProFormDependency name={["enableTransfer"]}>
+                      {({ enableTransfer }) => {
+                        return (
+                          <ProFormSelect
+                            name="baseVideoId"
+                            label="Select a base video"
+                            disabled={!enableTransfer}
+                            options={videos
+                              .filter((v) => v.analyzed)
+                              .map((v) => {
+                                return {
+                                  value: v.id,
+                                  label: v.name,
+                                };
+                              })}
+                          />
+                        );
+                      }}
+                    </ProFormDependency>
+                  </ProForm.Group>
+                  <ProForm.Group>
+                    <ProFormSwitch
+                      name="enableStage1"
+                      label="Enable Stage 1"
+                      initialValue={true}
+                    />
+                    <ProFormSwitch
+                      name="resumeStage1"
+                      label="Resume Stage 1"
+                      initialValue={false}
+                    />
+                    <ProFormSwitch
+                      name="enableStage2"
+                      label="Enable Stage 2"
+                      initialValue={true}
+                    />
+                    <ProFormSwitch
+                      name="resumeStage2"
+                      label="Resume Stage 2"
+                      initialValue={false}
+                    />
+                  </ProForm.Group>
+                </>
+              ),
+            },
+          ]}
+        />
       </ModalForm>
     </div>
   ) : (

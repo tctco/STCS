@@ -90,13 +90,16 @@ class AbstractTracker(metaclass=ABCMeta):
         """
         pass
 
-    def __init__(self, max_age: int, iou_threshold: float, w: int, h: int) -> None:
+    def __init__(
+        self, max_age: int, iou_threshold: float, w: int, h: int, resume_from_tracklet=0
+    ) -> None:
         self.cached_tracklets: list[Tracklet] = []
         self.max_age: int = max_age
         self.w = w
         self.h = h
         self.iou_threshold = iou_threshold
         self.timer = Profile()
+        self.resume_from_tracklet = resume_from_tracklet
 
     def __repr__(self):
         return self.__class__.__name__
@@ -114,6 +117,7 @@ class Tracklet:
         conf: float,
         w: int,
         h: int,
+        resume_from_tracklet: int = 0,
     ) -> None:
         self.id: int = Tracklet.count
         Tracklet.count += 1
@@ -129,6 +133,7 @@ class Tracklet:
         self.mask_area = [mask[y1:y2, x1:x2].sum()]
         self.last_centroid: Tuple[float, float] = centroid
         self.distance = 0
+        self.resume_from_tracklet = resume_from_tracklet
 
     def update(
         self,
@@ -151,12 +156,12 @@ class Tracklet:
         x1, y1, x2, y2 = parse_bbox(bbox, self.h, self.w)
         self.mask_area.append(mask[y1:y2, x1:x2].sum())
 
-    def get_stats(self, video_id: int):
+    def get_stats(self, video_id: int) -> TrackletStat:
         intervals_str = str([self.start_frame, *self.intervals, self.last_frame])
         clean_intervals_str = re.sub(r"\s+", "", intervals_str)
         return TrackletStat(
             video_id=video_id,
-            track_id=self.id,
+            track_id=self.id + self.resume_from_tracklet,
             start_frame=self.start_frame,
             end_frame=self.last_frame,
             lifespan=self.last_frame - self.start_frame + 1,
@@ -270,6 +275,7 @@ class MaskTracker(AbstractTracker):
                 dets.scores[i],
                 self.w,
                 self.h,
+                resume_from_tracklet=self.resume_from_tracklet,
             )
             self.cached_tracklets.append(new_tracklet)
             ids[i] = new_tracklet.id

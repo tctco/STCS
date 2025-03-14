@@ -73,9 +73,17 @@ new_job_request = api.model(
         "enableStage1": fields.Boolean(
             required=True, description="Enable stage 1 (local tracklets)"
         ),
+        "resumeStage1": fields.Boolean(
+            required=True,
+            description="Resume stage 1 (local tracklets) by using existing tracklets",
+        ),
         "enableStage2": fields.Boolean(
             required=True, description="Enable stage 2 (global tracklets)"
-        )
+        ),
+        "resumeStage2": fields.Boolean(
+            required=True,
+            description="Resume stage 2 (global tracklets) by using existing tracklets",
+        ),
     },
 )
 
@@ -174,7 +182,9 @@ class TrackJobResource(Resource):
         flow_model_id = payload.get("flowModel", None)
         base_video_id = payload.get("baseVideoId", -1)
         stage1 = payload.get("enableStage1", True)
+        resume_stage1 = payload.get("resumeStage1", False)
         stage2 = payload.get("enableStage2", True)
+        resume_stage2 = payload.get("resumeStage2", False)
         if base_video_id >= 0:
             base_video = (
                 g.session.query(Video)
@@ -234,7 +244,9 @@ class TrackJobResource(Resource):
                 base_video_id,
                 max_training_frames,
                 stage1,
+                resume_stage1,
                 stage2,
+                resume_stage2,
             ),
             result_ttl=86400,
             job_timeout=86400 * 2,
