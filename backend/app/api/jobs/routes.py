@@ -63,11 +63,26 @@ new_job_request = api.model(
         "segmModel": fields.String(required=True, description="Segm model id"),
         "poseModel": fields.String(required=True, description="Pose model id"),
         "flowModel": fields.String(allow_null=True, description="Flow model id"),
-        "baseVideoId": fields.String(
-            allow_null=True, description="Base ID model (video id)"
+        "baseVideoId": fields.Integer(
+            required=True, description="Base ID model (video id). -1 for none"
         ),
         "maxTrainingFrames": fields.Integer(
-            allow_null=True, description="Max training frames when building ID model"
+            required=True,
+            description="Max training frames when building ID model. -1 for none.",
+        ),
+        "enableStage1": fields.Boolean(
+            required=True, description="Enable stage 1 (local tracklets)"
+        ),
+        "resumeStage1": fields.Boolean(
+            required=True,
+            description="Resume stage 1 (local tracklets) by using existing tracklets",
+        ),
+        "enableStage2": fields.Boolean(
+            required=True, description="Enable stage 2 (global tracklets)"
+        ),
+        "resumeStage2": fields.Boolean(
+            required=True,
+            description="Resume stage 2 (global tracklets) by using existing tracklets",
         ),
     },
 )
@@ -165,8 +180,29 @@ class TrackJobResource(Resource):
         segm_model_id = payload.get("segmModel", None)
         pose_model_id = payload.get("poseModel", None)
         flow_model_id = payload.get("flowModel", None)
-        base_video_id = payload.get("baseVideoId", None)
-        max_training_frames = payload.get("maxTrainingFrames", None)
+        base_video_id = payload.get("baseVideoId", -1)
+        stage1 = payload.get("enableStage1", True)
+        resume_stage1 = payload.get("resumeStage1", False)
+        stage2 = payload.get("enableStage2", True)
+        resume_stage2 = payload.get("resumeStage2", False)
+        if base_video_id >= 0:
+            base_video = (
+                g.session.query(Video)
+                .filter(Video.id == base_video_id, Video.user_id == current_user.id)
+                .first()
+            )
+            if base_video is None:
+                return (
+                    error_msg("Cannot find base video with given video id in the DB"),
+                    400,
+                )
+            elif base_video.analyzed is False:
+                return error_msg("Base video is not analyzed yet")
+            elif base_video.user_id != current_user.id:
+                return error_msg("Base video does not belong to current user"), 400
+        max_training_frames = payload.get("maxTrainingFrames", -1)
+        if max_training_frames < 0:
+            max_training_frames = None
         if enable_flow and flow_model_id is None:
             return error_msg("Flow model id is required if enable flow"), 400
         video = (
@@ -207,6 +243,10 @@ class TrackJobResource(Resource):
                 animal,
                 base_video_id,
                 max_training_frames,
+                stage1,
+                resume_stage1,
+                stage2,
+                resume_stage2,
             ),
             result_ttl=86400,
             job_timeout=86400 * 2,

@@ -93,4 +93,4 @@ class TrackletStat(Base):
         self.distance = distance
 
     def __repr__(self) -> str:
-        return f"<TrackletStat(id={self.id}, video_name={self.video_name}, track_id={self.track_id}, start_frame={self.start_frame}, end_frame={self.end_frame}, lifespan={self.lifespan}, intervals={self.intervals}, mask_area={self.mask_area}, conf={self.conf})>"
+        return f"<TrackletStat(id={self.id}, track_id={self.track_id}, start_frame={self.start_frame}, end_frame={self.end_frame}, lifespan={self.lifespan}, intervals={self.intervals}, mask_area={self.mask_area}, conf={self.conf})>"

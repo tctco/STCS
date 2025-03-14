@@ -28,6 +28,7 @@ class AuthService {
       const { exp } = JSON.parse(user).accessToken;
       if (Date.now() >= exp * 1000) {
         localStorage.removeItem("user");
+        sessionStorage.removeItem("user");
       }
     }
   }
