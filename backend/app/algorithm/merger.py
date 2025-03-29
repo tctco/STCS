@@ -469,6 +469,9 @@ class Merger:
             )
             for id in ids:
                 self.logger.debug(f"img root {str(self.img_root / str(id))}")
+                if not Path(self.img_root / str(id)).exists():
+                    self.logger.warning(f"img root {str(self.img_root / str(id))} not exists")
+                    continue
                 fpaths = [
                     str(self.img_root / str(id) / x)
                     for x in os.listdir(self.img_root / f"{id}")
@@ -851,7 +854,11 @@ class Merger:
             ids = c.ids
             scores = np.array([self.tracklets[id].pred_score for id in ids])
             dist_mat = scipy_distance.cdist(target_scores, scores, metric="cosine")
-            matches, *_ = match(dist_mat)
+            try:
+                matches, *_ = match(dist_mat)
+            except:
+                logging.error(f'dist_mat:\n{dist_mat}\ntarget_scores\n{target_scores}\nscores\n{scores}')
+                raise
             total_dist = dist_mat[matches[:, 0], matches[:, 1]].sum()
             if total_dist / len(ids) < self.apperance_threshold or processing_dumped:
                 for i, j in matches:

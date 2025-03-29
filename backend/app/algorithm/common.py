@@ -44,16 +44,16 @@ def create_logger(name: str, file_path: str, level=logging.DEBUG) -> logging.Log
 
 
 def linear_assignment(cost_matrix: np.ndarray) -> np.ndarray:
-    try:
-        import lap
+    # try:
+    #     import lap
 
-        _, x, y = lap.lapjv(cost_matrix, extend_cost=True)
-        return np.array([[y[i], i] for i in x if i >= 0])  #
-    except ImportError:
-        from scipy.optimize import linear_sum_assignment
+    #     _, x, y = lap.lapjv(cost_matrix, extend_cost=True)
+    #     return np.array([[y[i], i] for i in x if i >= 0])  #
+    # except ImportError:
+    from scipy.optimize import linear_sum_assignment
 
-        x, y = linear_sum_assignment(cost_matrix)
-        return np.array(list(zip(x, y)))
+    x, y = linear_sum_assignment(cost_matrix)
+    return np.array(list(zip(x, y)))
 
 
 def match(cost_matrix: np.ndarray) -> Tuple[np.ndarray, List[int], List[int]]:
