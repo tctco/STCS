@@ -7,7 +7,7 @@ opencv-python-headless==4.8.0.76
 matplotlib==3.7.1
 networkx==2.8.4
 ultralytics==8.0.180
-lap==0.4.0
+lap==0.5.12
 scipy==1.10.1
 psycopg2==2.9.9
 Flask==2.2.3

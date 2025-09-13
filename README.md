@@ -44,7 +44,7 @@ Here are some videos showcasing the pose tracking performance (tested on Lenovo 
 ## Quick start
 
 1. Clone this repo with `git clone --recurse-submodules https://github.com/tctco/STCS.git` to your computer and `cd STCS`
-2. Download the [trained models](/tctco/STCS/releases/download/v0.0.1/trained_models.tar) from the release page and place them inside `STCS/backend/trained_models`
+2. Download the [trained models](https://github.com/tctco/STCS/releases/download/v0.0.1/trained_models.tar) from the release page and place them inside `STCS/backend/trained_models`
 3. Build & run the docker container by `docker compose up` (this container is quite large ~30GB, I'm sorry)
 4. Open your browser and go to `localhost` (you can access segTracker.ai via WAN/LAN by your hosting IP as well)
 5. Convert your video to a codec supported by Chrome Edge browser (we only tested H264)
