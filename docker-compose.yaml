@@ -112,7 +112,7 @@ services:
     networks:
       - segtracker-network
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data
+      - ./postgres-data:/var/lib/postgresql
 
 networks:
   segtracker-network:

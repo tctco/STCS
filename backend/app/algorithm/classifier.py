@@ -10,6 +10,7 @@ from mmpretrain import init_model
 from mmengine.registry import DefaultScope
 from mmengine.dataset import Compose, default_collate
 import torch
+from clean_checkpoints import clean_pth
 
 
 def is_best_model(model_path: str) -> bool:
@@ -99,13 +100,15 @@ class MMPretrainClassifier:
             raise ValueError("Model not supported")
 
     def load_best_model(self):
-        if (self.work_dir / "best_accuracy.pth").exists():
-            self.config.load_from = str(self.work_dir / "best_accuracy.pth")
+        best_model_path = self.work_dir / "best_accuracy.pth"
+        clean_model_path = self.work_dir / "best_accuracy_clean.pth"
+
+        if best_model_path.exists():
+            clean_pth(best_model_path, clean_model_path)
+            self.config.load_from = str(clean_model_path)
         else:
             raise FileNotFoundError(f"Best model not found in {self.work_dir}")
-        self.model = init_model(
-            self.config, str(self.work_dir / "best_accuracy.pth"), device=self.device
-        )
+        self.model = init_model(self.config, str(clean_model_path), device=self.device)
 
     def train(self, patience: int):
         best_model = None

@@ -8,3 +8,15 @@
 [submodule "backend/openmmlab/mmpretrain"]
 	path = backend/openmmlab/mmpretrain
 	url = https://github.com/tctco/mmpretrain.git
+[submodule "backend/openmmlab/mmpose"]
+	path = backend/openmmlab/mmpose
+	url = https://github.com/tctco/mmpose.git
+[submodule "backend/openmmlab/mmdetection"]
+	path = backend/openmmlab/mmdetection
+	url = https://github.com/tctco/mmdetection.git
+[submodule "backend/openmmlab/mmengine"]
+	path = backend/openmmlab/mmengine
+	url = https://github.com/open-mmlab/mmengine.git
+[submodule "backend/openmmlab/mmcv"]
+	path = backend/openmmlab/mmcv
+	url = https://github.com/open-mmlab/mmcv.git
